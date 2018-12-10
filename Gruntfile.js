@@ -117,5 +117,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-jscs');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jscs']);
+  grunt.registerTask('gmin', ['concat', 'uglify', 'jshint']);
   grunt.registerTask('lint', ['jshint', 'jscs']);
 };
