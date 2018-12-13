@@ -23,6 +23,7 @@ if (!THREE) {
     alert('No THREE available.');
     var THREE = {};
 }
+
 if (!dat) {
     alert('No dat.GUI available.');
     var dat = {};
