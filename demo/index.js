@@ -1,23 +1,23 @@
-var camera,
-    scene,
-    renderer,
-    clock,
-    player,
-    terrainScene,
-    decoScene,
-    lastOptions,
-    controls = {},
-    fpsCamera,
-    skyDome,
-    skyLight,
-    sand,
-    water; // jscs:ignore requireLineBreakAfterVariableAssignment
-var INV_MAX_FPS = 1 / 100,
-    frameDelta = 0,
-    paused = true,
-    mouseX = 0,
-    mouseY = 0,
-    useFPS = false;
+let camera;
+let scene;
+let renderer;
+let clock;
+let player;
+let terrainScene;
+let decoScene;
+let lastOptions;
+let controls = {};
+let fpsCamera;
+let skyDome;
+let skyLight;
+let sand;
+let water; // jscs:ignore requireLineBreakAfterVariableAssignment
+let INV_MAX_FPS = 1 / 100;
+let frameDelta = 0;
+let paused = true;
+let mouseX = 0;
+let mouseY = 0;
+let useFPS = false;
 
 function animate() {
     stats.begin();
@@ -117,13 +117,15 @@ function setupWorld() {
 }
 
 var scatterMeshes = function (that, mesh) {
-    var s = parseInt(that.segments, 10),
-        spread,
-        randomness;
+    let s = parseInt(that.segments, 10);
+    let spread;
+    let randomness;
+
     var o = {
         xSegments: s,
         ySegments: Math.round(s * that["width:length ratio"]),
     };
+
     if (that.scattering === "Linear") {
         spread = that.spread * 0.0005;
         randomness = Math.random;
@@ -149,7 +151,9 @@ var scatterMeshes = function (that, mesh) {
         randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[that.scattering], o, 2, 0.125);
     }
     var geo = terrainScene.children[0].geometry;
+
     terrainScene.remove(decoScene);
+
     decoScene = THREE.Terrain.ScatterMeshes(geo, {
         mesh: mesh,
         w: s,
@@ -160,6 +164,7 @@ var scatterMeshes = function (that, mesh) {
         maxSlope: 0.6283185307179586, // 36deg or 36 / 180 * Math.PI, about the angle of repose of earth
         maxTilt: 0.15707963267948966, //  9deg or  9 / 180 * Math.PI. Trees grow up regardless of slope but we can allow a small variation
     });
+
     if (decoScene) {
         // if (that.texture == 'Wireframe') {
         //   decoScene.children[0].material = decoMat;
@@ -179,9 +184,10 @@ var altitudeProbability = function (z, that) {
 };
 
 var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyticsValues) {
-    var s = parseInt(that.segments, 10),
-        h = that.heightmap === "heightmap.png";
-    var o = {
+    let s = parseInt(that.segments, 10);
+    let h = that.heightmap === "heightmap.png";
+
+    let o = {
         after: that.after,
         easing: THREE.Terrain[that.easing],
         heightmap: h
@@ -200,26 +206,36 @@ var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyt
         xSegments: s,
         ySegments: Math.round(s * that["width:length ratio"]),
     };
+
     scene.remove(terrainScene);
+
     terrainScene = THREE.Terrain(o);
 
     applySmoothing(that.smoothing, o);
 
     scene.add(terrainScene);
+
     skyDome.visible = sand.visible = water.visible = that.texture != "Wireframe";
+
     var he = document.getElementById("heightmap");
+
     if (he) {
         o.heightmap = he;
         THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, o);
     }
+
     that["Scatter meshes"](that, mesh);
+
     lastOptions = o;
 
-    var analysis = THREE.Terrain.Analyze(terrainScene.children[0], o),
-        deviations = getSummary(analysis),
-        prop;
+    let analysis = THREE.Terrain.Analyze(terrainScene.children[0], o);
+    let  deviations = getSummary(analysis);
+    let prop;
+
     analysis.elevation.drawHistogram(elevationGraph, 10);
+
     analysis.slope.drawHistogram(slopeGraph, 10);
+
     for (var i = 0, l = analyticsValues.length; i < l; i++) {
         prop = analyticsValues[i].getAttribute("data-property").split(".");
         var analytic = analysis[prop[0]][prop[1]];
@@ -228,6 +244,7 @@ var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyt
         }
         analyticsValues[i].textContent = cleanAnalytic(analytic);
     }
+    
     for (prop in deviations) {
         if (deviations.hasOwnProperty(prop)) {
             document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
@@ -317,12 +334,12 @@ function setupDatGui() {
         this.scattering = "PerlinAltitude";
 
         this.after = function (vertices, options) {
-          edgeCorrection(this, vertices, options);
+            edgeCorrection(this, vertices, options);
         }.bind(this);
 
         this.callRegenerate = function () {
             Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
-        }.bind(this);;
+        }.bind(this);
 
         window.rebuild = this.Regenerate = this.callRegenerate;
 
