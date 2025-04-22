@@ -19,9 +19,10 @@ let mouseX = 0;
 let mouseY = 0;
 let useFPS = false;
 let preloadedTextures;
+let stats;
 
 function animate() {
-    stats.begin();
+    stats.update();
     draw();
 
     frameDelta += clock.getDelta();
@@ -30,7 +31,6 @@ function animate() {
         frameDelta -= INV_MAX_FPS;
     }
 
-    stats.end();
     if (!paused) {
         requestAnimationFrame(animate);
     }
@@ -332,18 +332,18 @@ function Settings() {
 
     //t2.repeat.x = t2.repeat.y = 20;
     blend = THREE.Terrain.generateBlendedMaterial([
-        { texture: t1, repeat: { x: 6, y: 6 }  },
-        { texture: t2, levels: [-80, -35, 20, 50], repeat: { x: 6, y: 6 }  },
-        { texture: t3, levels: [20, 50, 60, 85], repeat: { x: 6, y: 6 }  },
+        { texture: t1, repeat: { x: 6, y: 6 } },
+        { texture: t2, levels: [-80, -35, 20, 50], repeat: { x: 6, y: 6 } },
+        { texture: t3, levels: [20, 50, 60, 85], repeat: { x: 6, y: 6 } },
         {
             texture: t4,
             glsl: "1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)",
-            repeat: { x: 6, y: 6 } 
+            repeat: { x: 6, y: 6 },
         },
         {
             texture: t3,
             glsl: "slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2",
-            repeat: { x: 6, y: 6 } 
+            repeat: { x: 6, y: 6 },
         }, // between 27 and 45 degrees
     ]);
 
@@ -389,6 +389,7 @@ function Settings() {
 }
 
 function setupDatGui() {
+    console.log("Setting up dat pita");
     var heightmapImage = new Image();
     heightmapImage.src = "demo/img/heightmap.png";
 
@@ -502,17 +503,10 @@ function setupDatGui() {
     gui.add(settings, "Scatter meshes");
     gui.add(settings, "Regenerate");
 
-    if (typeof window.Stats !== "undefined" && /[?&]stats=1\b/g.test(location.search)) {
-        stats = new Stats();
-        stats.setMode(0);
-        stats.domElement.style.position = "absolute";
-        stats.domElement.style.left = "20px";
-        stats.domElement.style.bottom = "0px";
-        document.body.appendChild(stats.domElement);
-        document.getElementById("code").style.left = "120px";
-    } else {
-        stats = { begin: function () {}, end: function () {} };
-    }
+    stats = new Stats();
+    stats.domElement.style = "position:absolute; right:0; bottom: 0; cursor: pointer; opacity: 0.9; z-index: 10000;";
+    stats.domElement.id = "StatsContainer";
+    document.body.appendChild(stats.domElement);
 }
 
 window.addEventListener(
