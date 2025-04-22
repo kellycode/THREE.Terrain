@@ -18,6 +18,7 @@ let paused = true;
 let mouseX = 0;
 let mouseY = 0;
 let useFPS = false;
+let preloadedTextures;
 
 function animate() {
     stats.begin();
@@ -50,7 +51,39 @@ function stopAnimating() {
     clock.stop();
 }
 
-function setup() {
+function preloadTextures(textureUrlArray, callback) {
+    const textureLoader = new THREE.TextureLoader();
+    let loadedCount = 0;
+    let loadedTextures = {};
+    let hasError = false;
+
+    function checkAllLoaded() {
+        loadedCount++;
+        if (loadedCount === textureUrlArray.length && !hasError) {
+            callback(loadedTextures);
+        }
+    }
+
+    try {
+        textureUrlArray.forEach((url) => {
+            loadedTextures[url] = textureLoader.load(
+                url,
+                checkAllLoaded,
+                (xhr) => console.log(`${url}: ${(xhr.loaded / xhr.total) * 100}% loaded`),
+                (error) => {
+                    hasError = true;
+                    console.error(`Error loading texture ${url}:`, error);
+                }
+            );
+        });
+    } catch (error) {
+        hasError = true;
+        console.error("Texture loading failed:", error);
+    }
+}
+
+function setup(preloaded) {
+    preloadedTextures = preloaded;
     setupThreeJS();
     setupControls();
     setupWorld();
@@ -90,16 +123,17 @@ function setupControls() {
 }
 
 function setupWorld() {
-    new THREE.TextureLoader().load("demo/img/sky1.jpg", function (t1) {
-        t1.minFilter = THREE.LinearFilter; // Texture is not a power-of-two size; use smoother interpolation.
-        skyDome = new THREE.Mesh(
-            new THREE.SphereGeometry(8192, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.5),
-            new THREE.MeshBasicMaterial({ map: t1, side: THREE.BackSide, fog: false })
-        );
-        skyDome.position.y = -99;
-        scene.add(skyDome);
-    });
+    // sky
+    let t1 = preloadedTextures["demo/img/sky1.jpg"];
+    t1.minFilter = THREE.LinearFilter; // Texture is not a power-of-two size; use smoother interpolation.
+    skyDome = new THREE.Mesh(
+        new THREE.SphereGeometry(8192, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.5),
+        new THREE.MeshBasicMaterial({ map: t1, side: THREE.BackSide, fog: false })
+    );
+    skyDome.position.y = -99;
+    scene.add(skyDome);
 
+    // water
     water = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 16, 16),
         new THREE.MeshLambertMaterial({ color: 0x006ba0, transparent: true, opacity: 0.6 })
@@ -108,6 +142,7 @@ function setupWorld() {
     water.rotation.x = -0.5 * Math.PI;
     scene.add(water);
 
+    // directional light
     skyLight = new THREE.DirectionalLight(0xe8bdb0, 1.5);
     skyLight.position.set(2950, 2625, -160); // Sun on the sky texture
     scene.add(skyLight);
@@ -229,7 +264,7 @@ var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyt
     lastOptions = o;
 
     let analysis = THREE.Terrain.Analyze(terrainScene.children[0], o);
-    let  deviations = getSummary(analysis);
+    let deviations = getSummary(analysis);
     let prop;
 
     analysis.elevation.drawHistogram(elevationGraph, 10);
@@ -244,7 +279,7 @@ var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyt
         }
         analyticsValues[i].textContent = cleanAnalytic(analytic);
     }
-    
+
     for (prop in deviations) {
         if (deviations.hasOwnProperty(prop)) {
             document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
@@ -280,38 +315,34 @@ function setupDatGui() {
             analyticsValues = document.getElementsByClassName("value");
         var loader = new THREE.TextureLoader();
 
-        loader.load("demo/img/sand1.jpg", function (t1) {
-            t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
-            sand = new THREE.Mesh(
-                new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
-                new THREE.MeshLambertMaterial({ map: t1 })
-            );
-            sand.position.y = -101;
-            sand.rotation.x = -0.5 * Math.PI;
-            scene.add(sand);
+        let t1 = preloadedTextures["demo/img/sand1.jpg"];
+        t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
+        sand = new THREE.Mesh(
+            new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
+            new THREE.MeshLambertMaterial({ map: t1 })
+        );
+        sand.position.y = -101;
+        sand.rotation.x = -0.5 * Math.PI;
+        scene.add(sand);
 
-            loader.load("demo/img/grass1.jpg", function (t2) {
-                loader.load("demo/img/stone1.jpg", function (t3) {
-                    loader.load("demo/img/snow1.jpg", function (t4) {
-                        // t2.repeat.x = t2.repeat.y = 2;
-                        blend = THREE.Terrain.generateBlendedMaterial([
-                            { texture: t1 },
-                            { texture: t2, levels: [-80, -35, 20, 50] },
-                            { texture: t3, levels: [20, 50, 60, 85] },
-                            {
-                                texture: t4,
-                                glsl: "1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)",
-                            },
-                            {
-                                texture: t3,
-                                glsl: "slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2",
-                            }, // between 27 and 45 degrees
-                        ]);
-                        that.Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues, this);
-                    });
-                });
-            });
-        });
+        let t2 = preloadedTextures["demo/img/grass1.jpg"];
+        let t3 = preloadedTextures["demo/img/stone1.jpg"];
+        let t4 = preloadedTextures["demo/img/snow1.jpg"];
+
+        t2.repeat.x = t2.repeat.y = 2;
+        blend = THREE.Terrain.generateBlendedMaterial([
+            { texture: t1 },
+            { texture: t2, levels: [-80, -35, 20, 50] },
+            { texture: t3, levels: [20, 50, 60, 85] },
+            {
+                texture: t4,
+                glsl: "1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)",
+            },
+            {
+                texture: t3,
+                glsl: "slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2",
+            }, // between 27 and 45 degrees
+        ]);
 
         this.easing = "Linear";
         this.heightmap = "PerlinDiamond";
@@ -350,6 +381,8 @@ function setupDatGui() {
         var mesh = buildTree();
 
         this["Scatter meshes"] = scatterMeshes;
+
+        that.Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues, this);
     }
 
     var gui = new dat.GUI();

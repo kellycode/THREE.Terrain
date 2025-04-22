@@ -255,7 +255,23 @@
         <script src="src/analysis.js"></script>
         <script src="demo/index.js"></script>
         <script>
-            setup();
+            let thisPath = "";
+
+            let textures = [
+                thisPath + "demo/img/sky1.jpg",
+                thisPath + "demo/img/sand1.jpg",
+                thisPath + "demo/img/grass1.jpg",
+                thisPath + "demo/img/stone1.jpg",
+                thisPath + "demo/img/snow1.jpg",
+            ];
+
+            let callback = function(preloaded){
+                console.log(preloaded)
+                setup(preloaded)
+            }
+
+            preloadTextures(textures, callback);
+
         </script>
     </body>
 </html>
