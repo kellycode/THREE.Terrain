@@ -151,7 +151,7 @@ function setupWorld() {
     scene.add(light);
 }
 
-var scatterMeshes = function (that, mesh) {
+function scatterMeshes(that, mesh) {
     let s = parseInt(that.segments, 10);
     let spread;
     let randomness;
@@ -209,16 +209,16 @@ var scatterMeshes = function (that, mesh) {
         // }
         terrainScene.add(decoScene);
     }
-};
+}
 
-var altitudeProbability = function (z, that) {
+function altitudeProbability(z, that) {
     if (z > -80 && z < -50) return THREE.Terrain.EaseInOut((z + 80) / (-50 + 80)) * that.spread * 0.002;
     else if (z > -50 && z < 20) return that.spread * 0.002;
     else if (z > 20 && z < 50) return THREE.Terrain.EaseInOut((z - 20) / (50 - 20)) * that.spread * 0.002;
     return 0;
-};
+}
 
-var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyticsValues) {
+function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues) {
     let s = parseInt(that.segments, 10);
     let h = that.heightmap === "heightmap.png";
 
@@ -285,7 +285,7 @@ var Regenerate = function (that, blend, mesh, elevationGraph, slopeGraph, analyt
             document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
         }
     }
-};
+}
 
 var edgeCorrection = function (that, vertices, options) {
     if (that.edgeDirection !== "Normal") {
@@ -301,89 +301,96 @@ var edgeCorrection = function (that, vertices, options) {
     }
 };
 
+function Settings() {
+    var that = this;
+    var mat = new THREE.MeshBasicMaterial({ color: 0x5566aa, wireframe: true });
+    var gray = new THREE.MeshPhongMaterial({ color: 0x88aaaa, specular: 0x444455, shininess: 10 });
+    var blend;
+    var elevationGraph = document.getElementById("elevation-graph"),
+        slopeGraph = document.getElementById("slope-graph"),
+        analyticsValues = document.getElementsByClassName("value");
+    var loader = new THREE.TextureLoader();
+
+    let t1 = preloadedTextures["demo/img/sand1.jpg"];
+    t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
+    sand = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
+        new THREE.MeshLambertMaterial({ map: t1 })
+    );
+    sand.position.y = -101;
+    sand.rotation.x = -0.5 * Math.PI;
+    scene.add(sand);
+
+    let t2 = preloadedTextures["demo/img/grass1.jpg"];
+    let t3 = preloadedTextures["demo/img/stone1.jpg"];
+    let t4 = preloadedTextures["demo/img/snow1.jpg"];
+
+    t2.wrapS = t2.wrapT = THREE.RepeatWrapping;
+    // need to add to options
+    t2.repeat.set(2, 2);
+    t2.needsUpdate = true;
+
+    //t2.repeat.x = t2.repeat.y = 20;
+    blend = THREE.Terrain.generateBlendedMaterial([
+        { texture: t1, repeat: { x: 6, y: 6 }  },
+        { texture: t2, levels: [-80, -35, 20, 50], repeat: { x: 6, y: 6 }  },
+        { texture: t3, levels: [20, 50, 60, 85], repeat: { x: 6, y: 6 }  },
+        {
+            texture: t4,
+            glsl: "1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)",
+            repeat: { x: 6, y: 6 } 
+        },
+        {
+            texture: t3,
+            glsl: "slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2",
+            repeat: { x: 6, y: 6 } 
+        }, // between 27 and 45 degrees
+    ]);
+
+    this.easing = "Linear";
+    this.heightmap = "PerlinDiamond";
+    this.smoothing = "None";
+    this.maxHeight = 200;
+    this.segments = 63;
+    this.steps = 1;
+    this.turbulent = false;
+    this.size = 1024;
+    this.sky = true;
+    this.texture = "Blended";
+    this.edgeDirection = "Normal";
+    this.edgeType = "Box";
+    this.edgeDistance = 256;
+    this.edgeCurve = "EaseInOut";
+    this["width:length ratio"] = 1.0;
+    this["Flight mode"] = useFPS;
+    this["Light color"] = "#" + skyLight.color.getHexString();
+    this.spread = 60;
+    this.scattering = "PerlinAltitude";
+
+    this.after = function (vertices, options) {
+        edgeCorrection(this, vertices, options);
+    }.bind(this);
+
+    this.callRegenerate = function () {
+        Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
+    }.bind(this);
+
+    window.rebuild = this.Regenerate = this.callRegenerate;
+
+    this.altitudeSpread = function (v, k) {
+        return k % 4 === 0 && Math.random() < altitudeProbability(v.z, this);
+    };
+
+    var mesh = buildTree();
+
+    this["Scatter meshes"] = scatterMeshes;
+
+    that.Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues, this);
+}
+
 function setupDatGui() {
     var heightmapImage = new Image();
     heightmapImage.src = "demo/img/heightmap.png";
-
-    function Settings() {
-        var that = this;
-        var mat = new THREE.MeshBasicMaterial({ color: 0x5566aa, wireframe: true });
-        var gray = new THREE.MeshPhongMaterial({ color: 0x88aaaa, specular: 0x444455, shininess: 10 });
-        var blend;
-        var elevationGraph = document.getElementById("elevation-graph"),
-            slopeGraph = document.getElementById("slope-graph"),
-            analyticsValues = document.getElementsByClassName("value");
-        var loader = new THREE.TextureLoader();
-
-        let t1 = preloadedTextures["demo/img/sand1.jpg"];
-        t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
-        sand = new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
-            new THREE.MeshLambertMaterial({ map: t1 })
-        );
-        sand.position.y = -101;
-        sand.rotation.x = -0.5 * Math.PI;
-        scene.add(sand);
-
-        let t2 = preloadedTextures["demo/img/grass1.jpg"];
-        let t3 = preloadedTextures["demo/img/stone1.jpg"];
-        let t4 = preloadedTextures["demo/img/snow1.jpg"];
-
-        t2.repeat.x = t2.repeat.y = 2;
-        blend = THREE.Terrain.generateBlendedMaterial([
-            { texture: t1 },
-            { texture: t2, levels: [-80, -35, 20, 50] },
-            { texture: t3, levels: [20, 50, 60, 85] },
-            {
-                texture: t4,
-                glsl: "1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)",
-            },
-            {
-                texture: t3,
-                glsl: "slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2",
-            }, // between 27 and 45 degrees
-        ]);
-
-        this.easing = "Linear";
-        this.heightmap = "PerlinDiamond";
-        this.smoothing = "None";
-        this.maxHeight = 200;
-        this.segments = 63;
-        this.steps = 1;
-        this.turbulent = false;
-        this.size = 1024;
-        this.sky = true;
-        this.texture = "Blended";
-        this.edgeDirection = "Normal";
-        this.edgeType = "Box";
-        this.edgeDistance = 256;
-        this.edgeCurve = "EaseInOut";
-        this["width:length ratio"] = 1.0;
-        this["Flight mode"] = useFPS;
-        this["Light color"] = "#" + skyLight.color.getHexString();
-        this.spread = 60;
-        this.scattering = "PerlinAltitude";
-
-        this.after = function (vertices, options) {
-            edgeCorrection(this, vertices, options);
-        }.bind(this);
-
-        this.callRegenerate = function () {
-            Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
-        }.bind(this);
-
-        window.rebuild = this.Regenerate = this.callRegenerate;
-
-        this.altitudeSpread = function (v, k) {
-            return k % 4 === 0 && Math.random() < altitudeProbability(v.z, this);
-        };
-
-        var mesh = buildTree();
-
-        this["Scatter meshes"] = scatterMeshes;
-
-        that.Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues, this);
-    }
 
     var gui = new dat.GUI();
     var settings = new Settings();

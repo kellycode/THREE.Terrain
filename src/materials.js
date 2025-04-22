@@ -49,9 +49,11 @@ THREE.Terrain.generateBlendedMaterial = function(textures, material) {
         assign = '',
         t0Repeat = textures[0].texture.repeat,
         t0Offset = textures[0].texture.offset;
+
     for (var i = 0, l = textures.length; i < l; i++) {
         // Update textures
         textures[i].texture.wrapS = textures[i].wrapT = THREE.RepeatWrapping;
+        textures[i].texture.repeat.set(textures[i].repeat.x, textures[i].repeat.y);
         textures[i].texture.needsUpdate = true;
 
         // Shader fragments
