@@ -4,6 +4,7 @@ let renderer;
 let clock;
 let player;
 let terrainScene;
+// decoration or trees in this case
 let decoScene;
 let lastOptions;
 let controls = {};
@@ -12,7 +13,7 @@ let skyDome;
 let skyLight;
 const skyLightColor = new THREE.Color(0xe8bdb0);
 let sand;
-let water; // jscs:ignore requireLineBreakAfterVariableAssignment
+let water; // jscs:ignore requireLineBreakAfterVariableAssignment (jscs is deprecated)
 let INV_MAX_FPS = 1 / 100;
 let frameDelta = 0;
 let paused = true;
@@ -49,7 +50,7 @@ let settingOptions = {
     "Light color": "#" + skyLightColor.getHexString(),
     spread: 60,
     scattering: "PerlinAltitude",
-}
+};
 
 function animate() {
     stats.update();
@@ -188,13 +189,13 @@ function setupWorld() {
 }
 
 function scatterMeshes() {
-    let s = parseInt(settings.segments, 10);
+    let segments = parseInt(settings.segments, 10);
     let spread;
     let randomness;
 
-    var o = {
-        xSegments: s,
-        ySegments: Math.round(s * settings["width:length ratio"]),
+    var scatterOptions = {
+        xSegments: segments,
+        ySegments: Math.round(segments * settings["width:length ratio"]),
     };
 
     if (settings.scattering === "Linear") {
@@ -204,17 +205,17 @@ function scatterMeshes() {
         spread = settings.altitudeSpread;
     } else if (settings.scattering === "PerlinAltitude") {
         spread = (function () {
-            var h = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, o, 2, 0.125)(),
-                hs = THREE.Terrain.InEaseOut(settings.spread * 0.01);
-            return function (v, k) {
-                var rv = h[k],
-                    place = false;
-                if (rv < hs) {
+            var helper = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, scatterOptions, 2, 0.125)();
+            var helperSpread = THREE.Terrain.InEaseOut(settings.spread * 0.01);
+            return function (vertex, index) {
+                var rv = helper[index];
+                var place = false;
+                if (rv < helperSpread) {
                     place = true;
-                } else if (rv < hs + 0.2) {
-                    place = THREE.Terrain.EaseInOut((rv - hs) * 5) * hs < Math.random();
+                } else if (rv < helperSpread + 0.2) {
+                    place = THREE.Terrain.EaseInOut((rv - helperSpread) * 5) * helperSpread < Math.random();
                 }
-                return Math.random() < altitudeProbability(v.z, settings) * 5 && place;
+                return Math.random() < altitudeProbability(vertex.z, settings) * 5 && place;
             };
         })();
     } else {
@@ -223,12 +224,14 @@ function scatterMeshes() {
     }
     var geo = terrainScene.children[0].geometry;
 
-    terrainScene.remove(decoScene);
+    if (decoScene) {
+        terrainScene.remove(decoScene);
+    }
 
     decoScene = THREE.Terrain.ScatterMeshes(geo, {
         mesh: treeMesh,
-        w: s,
-        h: Math.round(s * settings["width:length ratio"]),
+        w: segments,
+        h: Math.round(segments * settings["width:length ratio"]),
         spread: spread,
         smoothSpread: settings.scattering === "Linear" ? 0 : 0.2,
         randomness: randomness,
@@ -358,10 +361,9 @@ function Settings() {
         }, // between 27 and 45 degrees
     ]);
 
-
     for (let key in settingOptions) {
         that[key] = settingOptions[key];
-      }
+    }
 
     this.after = function (vertices, options) {
         edgeCorrection(this, vertices, options);
