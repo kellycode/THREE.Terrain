@@ -122,7 +122,8 @@ function setup(preloaded) {
     watchFocus();
     setupDatGui();
     startAnimating();
-    Regenerate(settings, settings.blend, treeMesh);
+    // uses settings
+    Regenerate();
 }
 
 function setUpScene() {
@@ -253,7 +254,7 @@ function altitudeProbability(z, that) {
     return 0;
 }
 
-function Regenerate(that, blend, mesh) {
+function Regenerate() {
     let s = parseInt(settings.segments, 10);
     let h = settings.heightmap === "heightmap.png";
     let set = settings;
@@ -266,7 +267,7 @@ function Regenerate(that, blend, mesh) {
             : settings.heightmap === "influences"
             ? customInfluences
             : THREE.Terrain[settings.heightmap],
-        material: settings.texture == "Wireframe" ? mat : settings.texture == "Blended" ? blend : gray,
+        material: settings.texture == "Wireframe" ? mat : settings.texture == "Blended" ? settings.blend : gray,
         maxHeight: settings.maxHeight - 100,
         minHeight: -100,
         steps: settings.steps,
@@ -367,7 +368,7 @@ function Settings() {
     }.bind(this);
 
     this.callRegenerate = function () {
-        Regenerate(this, blend, treeMesh);
+        Regenerate();
     }.bind(this);
 
     window.rebuild = this.Regenerate = this.callRegenerate;
