@@ -10,6 +10,7 @@ let controls = {};
 let fpsCamera;
 let skyDome;
 let skyLight;
+const skyLightColor = new THREE.Color(0xe8bdb0);
 let sand;
 let water; // jscs:ignore requireLineBreakAfterVariableAssignment
 let INV_MAX_FPS = 1 / 100;
@@ -26,7 +27,29 @@ let regenOpts;
 let elevationGraph;
 let slopeGraph;
 let analyticsValues;
-const skylightColor = 0xe8bdb0;
+let treeMesh = buildTree();
+
+let settingOptions = {
+    easing: "Linear",
+    heightmap: "PerlinDiamond",
+    smoothing: "None",
+    maxHeight: 200,
+    segments: 63,
+    steps: 1,
+    turbulent: false,
+    size: 1024,
+    sky: true,
+    texture: "Blended",
+    edgeDirection: "Normal",
+    edgeType: "Box",
+    edgeDistance: 256,
+    edgeCurve: "EaseInOut",
+    "width:length ratio": 1.0,
+    "Flight mode": useFPS,
+    "Light color": "#" + skyLightColor.getHexString(),
+    spread: 60,
+    scattering: "PerlinAltitude",
+}
 
 function animate() {
     stats.update();
@@ -99,6 +122,7 @@ function setup(preloaded) {
     watchFocus();
     setupDatGui();
     startAnimating();
+    Regenerate(settings, settings.blend, treeMesh);
 }
 
 function setUpScene() {
@@ -145,14 +169,14 @@ function setupWorld() {
     // water
     water = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 16, 16),
-        new THREE.MeshLambertMaterial({ color: skylightColor, transparent: true, opacity: 0.6 })
+        new THREE.MeshLambertMaterial({ color: skyLightColor, transparent: true, opacity: 0.6 })
     );
     water.position.y = -99;
     water.rotation.x = -0.5 * Math.PI;
     scene.add(water);
 
     // directional light
-    skyLight = new THREE.DirectionalLight(0xe8bdb0, 1.5);
+    skyLight = new THREE.DirectionalLight(skyLightColor, 1.5);
     skyLight.position.set(2950, 2625, -160); // Sun on the sky texture
     scene.add(skyLight);
 
@@ -162,25 +186,25 @@ function setupWorld() {
     scene.add(light);
 }
 
-function scatterMeshes(that, mesh) {
-    let s = parseInt(that.segments, 10);
+function scatterMeshes() {
+    let s = parseInt(settings.segments, 10);
     let spread;
     let randomness;
 
     var o = {
         xSegments: s,
-        ySegments: Math.round(s * that["width:length ratio"]),
+        ySegments: Math.round(s * settings["width:length ratio"]),
     };
 
-    if (that.scattering === "Linear") {
-        spread = that.spread * 0.0005;
+    if (settings.scattering === "Linear") {
+        spread = settings.spread * 0.0005;
         randomness = Math.random;
-    } else if (that.scattering === "Altitude") {
-        spread = that.altitudeSpread;
-    } else if (that.scattering === "PerlinAltitude") {
+    } else if (settings.scattering === "Altitude") {
+        spread = settings.altitudeSpread;
+    } else if (settings.scattering === "PerlinAltitude") {
         spread = (function () {
             var h = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, o, 2, 0.125)(),
-                hs = THREE.Terrain.InEaseOut(that.spread * 0.01);
+                hs = THREE.Terrain.InEaseOut(settings.spread * 0.01);
             return function (v, k) {
                 var rv = h[k],
                     place = false;
@@ -189,33 +213,33 @@ function scatterMeshes(that, mesh) {
                 } else if (rv < hs + 0.2) {
                     place = THREE.Terrain.EaseInOut((rv - hs) * 5) * hs < Math.random();
                 }
-                return Math.random() < altitudeProbability(v.z, that) * 5 && place;
+                return Math.random() < altitudeProbability(v.z, settings) * 5 && place;
             };
         })();
     } else {
-        spread = THREE.Terrain.InEaseOut(that.spread * 0.01) * (that.scattering === "Worley" ? 1 : 0.5);
-        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[that.scattering], o, 2, 0.125);
+        spread = THREE.Terrain.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
+        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], o, 2, 0.125);
     }
     var geo = terrainScene.children[0].geometry;
 
     terrainScene.remove(decoScene);
 
     decoScene = THREE.Terrain.ScatterMeshes(geo, {
-        mesh: mesh,
+        mesh: treeMesh,
         w: s,
-        h: Math.round(s * that["width:length ratio"]),
+        h: Math.round(s * settings["width:length ratio"]),
         spread: spread,
-        smoothSpread: that.scattering === "Linear" ? 0 : 0.2,
+        smoothSpread: settings.scattering === "Linear" ? 0 : 0.2,
         randomness: randomness,
         maxSlope: 0.6283185307179586, // 36deg or 36 / 180 * Math.PI, about the angle of repose of earth
         maxTilt: 0.15707963267948966, //  9deg or  9 / 180 * Math.PI. Trees grow up regardless of slope but we can allow a small variation
     });
 
     if (decoScene) {
-        // if (that.texture == 'Wireframe') {
+        // if (settings.texture == 'Wireframe') {
         //   decoScene.children[0].material = decoMat;
         // }
-        // else if (that.texture == 'Grayscale') {
+        // else if (settings.texture == 'Grayscale') {
         //   decoScene.children[0].material = gray;
         // }
         terrainScene.add(decoScene);
@@ -229,40 +253,40 @@ function altitudeProbability(z, that) {
     return 0;
 }
 
-function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues) {
-    let s = parseInt(that.segments, 10);
-    let h = that.heightmap === "heightmap.png";
+function Regenerate(that, blend, mesh) {
+    let s = parseInt(settings.segments, 10);
+    let h = settings.heightmap === "heightmap.png";
     let set = settings;
 
     regenOpts = {
-        after: that.after,
-        easing: THREE.Terrain[that.easing],
+        after: settings.after,
+        easing: THREE.Terrain[settings.easing],
         heightmap: h
             ? heightmapImage
-            : that.heightmap === "influences"
+            : settings.heightmap === "influences"
             ? customInfluences
-            : THREE.Terrain[that.heightmap],
-        material: that.texture == "Wireframe" ? mat : that.texture == "Blended" ? blend : gray,
-        maxHeight: that.maxHeight - 100,
+            : THREE.Terrain[settings.heightmap],
+        material: settings.texture == "Wireframe" ? mat : settings.texture == "Blended" ? blend : gray,
+        maxHeight: settings.maxHeight - 100,
         minHeight: -100,
-        steps: that.steps,
+        steps: settings.steps,
         stretch: true,
-        turbulent: that.turbulent,
-        xSize: that.size,
-        ySize: Math.round(that.size * that["width:length ratio"]),
+        turbulent: settings.turbulent,
+        xSize: settings.size,
+        ySize: Math.round(settings.size * settings["width:length ratio"]),
         xSegments: s,
-        ySegments: Math.round(s * that["width:length ratio"]),
+        ySegments: Math.round(s * settings["width:length ratio"]),
     };
 
     scene.remove(terrainScene);
 
     terrainScene = THREE.Terrain(regenOpts);
 
-    applySmoothing(that.smoothing, regenOpts);
+    applySmoothing(settings.smoothing, regenOpts);
 
     scene.add(terrainScene);
 
-    skyDome.visible = sand.visible = water.visible = that.texture != "Wireframe";
+    skyDome.visible = sand.visible = water.visible = settings.texture != "Wireframe";
 
     var he = document.getElementById("heightmap");
 
@@ -271,7 +295,7 @@ function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValu
         THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, regenOpts);
     }
 
-    that["Scatter meshes"](that, mesh);
+    scatterMeshes();
 
     lastOptions = regenOpts;
 }
@@ -317,7 +341,7 @@ function Settings() {
     t2.needsUpdate = true;
 
     //t2.repeat.x = t2.repeat.y = 20;
-    blend = THREE.Terrain.generateBlendedMaterial([
+    this.blend = blend = THREE.Terrain.generateBlendedMaterial([
         { texture: t1, repeat: { x: 6, y: 6 } },
         { texture: t2, levels: [-80, -35, 20, 50], repeat: { x: 6, y: 6 } },
         { texture: t3, levels: [20, 50, 60, 85], repeat: { x: 6, y: 6 } },
@@ -333,33 +357,17 @@ function Settings() {
         }, // between 27 and 45 degrees
     ]);
 
-    this.easing = "Linear";
-    this.heightmap = "PerlinDiamond";
-    this.smoothing = "None";
-    this.maxHeight = 200;
-    this.segments = 63;
-    this.steps = 1;
-    this.turbulent = false;
-    this.size = 1024;
-    this.sky = true;
-    this.texture = "Blended";
-    this.edgeDirection = "Normal";
-    this.edgeType = "Box";
-    this.edgeDistance = 256;
-    this.edgeCurve = "EaseInOut";
-    this["width:length ratio"] = 1.0;
-    this["Flight mode"] = useFPS;
-    let slc = skyLight.color.getHexString();
-    this["Light color"] = "#" + skyLight.color.getHexString();
-    this.spread = 60;
-    this.scattering = "PerlinAltitude";
+
+    for (let key in settingOptions) {
+        that[key] = settingOptions[key];
+      }
 
     this.after = function (vertices, options) {
         edgeCorrection(this, vertices, options);
     }.bind(this);
 
     this.callRegenerate = function () {
-        Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
+        Regenerate(this, blend, treeMesh);
     }.bind(this);
 
     window.rebuild = this.Regenerate = this.callRegenerate;
@@ -368,11 +376,7 @@ function Settings() {
         return k % 4 === 0 && Math.random() < altitudeProbability(v.z, this);
     };
 
-    var mesh = buildTree();
-
     this["Scatter meshes"] = scatterMeshes;
-
-    this.Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
 }
 
 function setupDatGui() {
@@ -428,7 +432,7 @@ function setupDatGui() {
         ])
         .onChange(function (val) {
             applySmoothing(val, lastOptions);
-            settings["Scatter meshes"]();
+            settings["Scatter meshes"](settings);
             if (lastOptions.heightmap) {
                 THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, lastOptions);
             }
