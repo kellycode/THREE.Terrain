@@ -20,6 +20,13 @@ let mouseY = 0;
 let useFPS = false;
 let preloadedTextures;
 let stats;
+let analyticsActive = false;
+let settings;
+let regenOpts;
+let elevationGraph;
+let slopeGraph;
+let analyticsValues;
+const skylightColor = 0xe8bdb0;
 
 function animate() {
     stats.update();
@@ -84,15 +91,17 @@ function preloadTextures(textureUrlArray, callback) {
 
 function setup(preloaded) {
     preloadedTextures = preloaded;
-    setupThreeJS();
+    setUpScene();
     setupControls();
     setupWorld();
+    // uses world items
+    settings = new Settings();
     watchFocus();
     setupDatGui();
     startAnimating();
 }
 
-function setupThreeJS() {
+function setUpScene() {
     scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x868293, 0.0007);
 
@@ -136,7 +145,7 @@ function setupWorld() {
     // water
     water = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 16, 16),
-        new THREE.MeshLambertMaterial({ color: 0x006ba0, transparent: true, opacity: 0.6 })
+        new THREE.MeshLambertMaterial({ color: skylightColor, transparent: true, opacity: 0.6 })
     );
     water.position.y = -99;
     water.rotation.x = -0.5 * Math.PI;
@@ -146,6 +155,8 @@ function setupWorld() {
     skyLight = new THREE.DirectionalLight(0xe8bdb0, 1.5);
     skyLight.position.set(2950, 2625, -160); // Sun on the sky texture
     scene.add(skyLight);
+
+    // directional light
     var light = new THREE.DirectionalLight(0xc3eaff, 0.75);
     light.position.set(-1, -0.5, -1);
     scene.add(light);
@@ -221,8 +232,9 @@ function altitudeProbability(z, that) {
 function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues) {
     let s = parseInt(that.segments, 10);
     let h = that.heightmap === "heightmap.png";
+    let set = settings;
 
-    let o = {
+    regenOpts = {
         after: that.after,
         easing: THREE.Terrain[that.easing],
         heightmap: h
@@ -244,9 +256,9 @@ function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValu
 
     scene.remove(terrainScene);
 
-    terrainScene = THREE.Terrain(o);
+    terrainScene = THREE.Terrain(regenOpts);
 
-    applySmoothing(that.smoothing, o);
+    applySmoothing(that.smoothing, regenOpts);
 
     scene.add(terrainScene);
 
@@ -255,36 +267,13 @@ function Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValu
     var he = document.getElementById("heightmap");
 
     if (he) {
-        o.heightmap = he;
-        THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, o);
+        regenOpts.heightmap = he;
+        THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, regenOpts);
     }
 
     that["Scatter meshes"](that, mesh);
 
-    lastOptions = o;
-
-    let analysis = THREE.Terrain.Analyze(terrainScene.children[0], o);
-    let deviations = getSummary(analysis);
-    let prop;
-
-    analysis.elevation.drawHistogram(elevationGraph, 10);
-
-    analysis.slope.drawHistogram(slopeGraph, 10);
-
-    for (var i = 0, l = analyticsValues.length; i < l; i++) {
-        prop = analyticsValues[i].getAttribute("data-property").split(".");
-        var analytic = analysis[prop[0]][prop[1]];
-        if (analyticsValues[i].getAttribute("class").split(/\s+/).indexOf("percent") !== -1) {
-            analytic *= 100;
-        }
-        analyticsValues[i].textContent = cleanAnalytic(analytic);
-    }
-
-    for (prop in deviations) {
-        if (deviations.hasOwnProperty(prop)) {
-            document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
-        }
-    }
+    lastOptions = regenOpts;
 }
 
 var edgeCorrection = function (that, vertices, options) {
@@ -306,9 +295,6 @@ function Settings() {
     var mat = new THREE.MeshBasicMaterial({ color: 0x5566aa, wireframe: true });
     var gray = new THREE.MeshPhongMaterial({ color: 0x88aaaa, specular: 0x444455, shininess: 10 });
     var blend;
-    var elevationGraph = document.getElementById("elevation-graph"),
-        slopeGraph = document.getElementById("slope-graph"),
-        analyticsValues = document.getElementsByClassName("value");
     var loader = new THREE.TextureLoader();
 
     let t1 = preloadedTextures["demo/img/sand1.jpg"];
@@ -363,6 +349,7 @@ function Settings() {
     this.edgeCurve = "EaseInOut";
     this["width:length ratio"] = 1.0;
     this["Flight mode"] = useFPS;
+    let slc = skyLight.color.getHexString();
     this["Light color"] = "#" + skyLight.color.getHexString();
     this.spread = 60;
     this.scattering = "PerlinAltitude";
@@ -385,7 +372,7 @@ function Settings() {
 
     this["Scatter meshes"] = scatterMeshes;
 
-    that.Regenerate(that, blend, mesh, elevationGraph, slopeGraph, analyticsValues, this);
+    this.Regenerate(this, blend, mesh, elevationGraph, slopeGraph, analyticsValues);
 }
 
 function setupDatGui() {
@@ -394,7 +381,7 @@ function setupDatGui() {
     heightmapImage.src = "demo/img/heightmap.png";
 
     var gui = new dat.GUI();
-    var settings = new Settings();
+    //var settings = new Settings();
     var heightmapFolder = gui.addFolder("Heightmap");
 
     heightmapFolder
@@ -548,7 +535,7 @@ document.addEventListener(
     false
 );
 
-// Stop animating if the window is out of focus
+// Stop animating if the window lost focus
 function watchFocus() {
     var _blurred = false;
     window.addEventListener("focus", function () {
@@ -565,24 +552,78 @@ function watchFocus() {
     });
 }
 
-document.querySelector("#analytics .close").addEventListener(
-    "click",
-    function (event) {
-        event.preventDefault();
-        document.getElementById("analytics").classList.remove("visible");
-        document.getElementById("show-analytics").classList.add("visible");
-    },
-    false
-);
+function loadTemplate(templatePath, targetDivId, callback) {
+    fetch(templatePath)
+        .then((response) => response.text())
+        .then((template) => {
+            const targetDiv = document.getElementById(targetDivId);
+            if (targetDiv) {
+                targetDiv.innerHTML = template;
+                initAnalytics();
+            } else {
+                console.error(`Div with id "${targetDivId}" not found.`);
+            }
+        })
+        .catch((error) => console.error("Error loading template:", error));
+}
+
+function populateAnalytics() {
+    let analysis = THREE.Terrain.Analyze(terrainScene.children[0], regenOpts);
+    let deviations = getSummary(analysis);
+    let prop;
+
+    analysis.elevation.drawHistogram(elevationGraph, 10);
+
+    analysis.slope.drawHistogram(slopeGraph, 10);
+
+    for (var i = 0, l = analyticsValues.length; i < l; i++) {
+        prop = analyticsValues[i].getAttribute("data-property").split(".");
+        var analytic = analysis[prop[0]][prop[1]];
+        if (analyticsValues[i].getAttribute("class").split(/\s+/).indexOf("percent") !== -1) {
+            analytic *= 100;
+        }
+        analyticsValues[i].textContent = cleanAnalytic(analytic);
+    }
+
+    for (prop in deviations) {
+        if (deviations.hasOwnProperty(prop)) {
+            document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
+        }
+    }
+}
+
+function initAnalytics() {
+    document.getElementById("show-analytics").classList.remove("visible");
+    var analytics = document.getElementById("analytics");
+    analytics.scrollTop = 0;
+    analytics.classList.add("visible");
+
+    elevationGraph = document.getElementById("elevation-graph");
+    slopeGraph = document.getElementById("slope-graph");
+    analyticsValues = document.getElementsByClassName("value");
+
+    document.querySelector("#analytics .close").addEventListener(
+        "click",
+        function (event) {
+            event.preventDefault();
+            document.getElementById("analytics").classList.remove("visible");
+            document.getElementById("show-analytics").classList.add("visible");
+        },
+        false
+    );
+
+    populateAnalytics();
+}
 
 document.querySelector("#show-analytics").addEventListener(
     "click",
     function (event) {
+        loadTemplate("./demo/analytics.html", "analytics");
         event.preventDefault();
-        document.getElementById("show-analytics").classList.remove("visible");
-        var analytics = document.getElementById("analytics");
-        analytics.scrollTop = 0;
-        analytics.classList.add("visible");
+        //document.getElementById("show-analytics").classList.remove("visible");
+        //var analytics = document.getElementById("analytics");
+        //analytics.scrollTop = 0;
+        //analytics.classList.add("visible");
     },
     false
 );
