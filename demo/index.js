@@ -30,6 +30,9 @@ let slopeGraph;
 let analyticsValues;
 let treeMesh = buildTree();
 
+var heightmapImage = new Image();
+heightmapImage.src = "demo/img/heightmap.png";
+
 let settingOptions = {
     easing: "Linear",
     heightmap: "PerlinDiamond",
@@ -171,7 +174,7 @@ function setupWorld() {
     // water
     water = new THREE.Mesh(
         new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 16, 16),
-        new THREE.MeshLambertMaterial({ color: skyLightColor, transparent: true, opacity: 0.6 })
+        new THREE.MeshLambertMaterial({ color: 0x006ba0, transparent: true, opacity: 0.6 })
     );
     water.position.y = -99;
     water.rotation.x = -0.5 * Math.PI;
@@ -258,14 +261,14 @@ function altitudeProbability(z, that) {
 }
 
 function Regenerate() {
-    let s = parseInt(settings.segments, 10);
-    let h = settings.heightmap === "heightmap.png";
-    let set = settings;
+    let segments = parseInt(settings.segments, 10);
+    // kind of arbitrary
+    let heightmap = settings.heightmap === "heightmap.png";
 
     regenOpts = {
         after: settings.after,
         easing: THREE.Terrain[settings.easing],
-        heightmap: h
+        heightmap: heightmap
             ? heightmapImage
             : settings.heightmap === "influences"
             ? customInfluences
@@ -278,8 +281,8 @@ function Regenerate() {
         turbulent: settings.turbulent,
         xSize: settings.size,
         ySize: Math.round(settings.size * settings["width:length ratio"]),
-        xSegments: s,
-        ySegments: Math.round(s * settings["width:length ratio"]),
+        xSegments: segments,
+        ySegments: Math.round(segments * settings["width:length ratio"]),
     };
 
     scene.remove(terrainScene);
@@ -384,8 +387,6 @@ function Settings() {
 
 function setupDatGui() {
     console.log("Setting up dat pita");
-    var heightmapImage = new Image();
-    heightmapImage.src = "demo/img/heightmap.png";
 
     var gui = new dat.GUI();
     //var settings = new Settings();
