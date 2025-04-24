@@ -28,7 +28,6 @@ let regenOpts;
 let elevationGraph;
 let slopeGraph;
 let analyticsValues;
-let treeMesh = buildTree();
 let gray;
 let mat;
 
@@ -236,7 +235,7 @@ function scatterMeshes() {
     }
 
     decoScene = THREE.Terrain.ScatterMeshes(geo, {
-        mesh: treeMesh,
+        mesh: buildTree(),
         w: segments,
         h: Math.round(segments * settings["width:length ratio"]),
         spread: spread,

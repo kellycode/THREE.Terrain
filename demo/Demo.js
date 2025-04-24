@@ -30,7 +30,6 @@ export class Demo {
         this.elevationGraph;
         this.slopeGraph;
         this.analyticsValues;
-        this.treeMesh = buildTree();
         this.gray;
         this.mat;
 
