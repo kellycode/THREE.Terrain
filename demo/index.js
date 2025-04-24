@@ -2,10 +2,7 @@ let camera;
 let scene;
 let renderer;
 let clock;
-let player;
 let terrainScene; // dat
-// decoration or trees in this case
-let decoScene;
 let lastOptions; // dat
 let controls = {}; // dat
 let fpsCamera; // dat
@@ -22,14 +19,9 @@ let mouseY = 0;
 let useFPS = false; // dat
 let preloadedTextures;
 let stats; // dat
-let analyticsActive = false;
 let settings; // dat
 let regenOpts;
-let elevationGraph;
-let slopeGraph;
-let analyticsValues;
-let gray;
-let mat;
+
 
 let heightmapImage = new Image();
 heightmapImage.src = "demo/img/heightmap.png";
@@ -37,7 +29,7 @@ heightmapImage.src = "demo/img/heightmap.png";
 let settingOptions = {
     easing: "Linear",
     heightmap: "PerlinDiamond",
-    smoothing: "None",
+    smoothing: "Gaussian (1.5, 7)",
     maxHeight: 200,
     segments: 63,
     steps: 1,
@@ -194,75 +186,6 @@ function setupWorld() {
     scene.add(light);
 }
 
-function scatterMeshes() {
-    let segments = parseInt(settings.segments, 10);
-    let spread;
-    let randomness;
-
-    let scatterOptions = {
-        xSegments: segments,
-        ySegments: Math.round(segments * settings["width:length ratio"]),
-    };
-
-    if (settings.scattering === "Linear") {
-        spread = settings.spread * 0.0005;
-        randomness = Math.random;
-    } else if (settings.scattering === "Altitude") {
-        spread = settings.altitudeSpread;
-    } else if (settings.scattering === "PerlinAltitude") {
-        spread = (function () {
-            let helper = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, scatterOptions, 2, 0.125)();
-            let helperSpread = THREE.Terrain.InEaseOut(settings.spread * 0.01);
-            return function (vertex, index) {
-                let rv = helper[index];
-                let place = false;
-                if (rv < helperSpread) {
-                    place = true;
-                } else if (rv < helperSpread + 0.2) {
-                    place = THREE.Terrain.EaseInOut((rv - helperSpread) * 5) * helperSpread < Math.random();
-                }
-                return Math.random() < altitudeProbability(vertex.z, settings) * 5 && place;
-            };
-        })();
-    } else {
-        spread = THREE.Terrain.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
-        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], o, 2, 0.125);
-    }
-    let geo = terrainScene.children[0].geometry;
-
-    if (decoScene) {
-        terrainScene.remove(decoScene);
-    }
-
-    decoScene = THREE.Terrain.ScatterMeshes(geo, {
-        mesh: buildTree(),
-        w: segments,
-        h: Math.round(segments * settings["width:length ratio"]),
-        spread: spread,
-        smoothSpread: settings.scattering === "Linear" ? 0 : 0.2,
-        randomness: randomness,
-        maxSlope: 0.6283185307179586, // 36deg or 36 / 180 * Math.PI, about the angle of repose of earth
-        maxTilt: 0.15707963267948966, //  9deg or  9 / 180 * Math.PI. Trees grow up regardless of slope but we can allow a small variation
-    });
-
-    if (decoScene) {
-        // decoScene.children[0] needs iteration
-        // if (settings.texture == 'Wireframe') {
-        //   decoScene.children[0].material = settings.mat;
-        // }
-        // else if (settings.texture == 'Grayscale') {
-        //   decoScene.children[0].material = settings.gray;
-        // }
-        terrainScene.add(decoScene);
-    }
-}
-
-function altitudeProbability(z, that) {
-    if (z > -80 && z < -50) return THREE.Terrain.EaseInOut((z + 80) / (-50 + 80)) * that.spread * 0.002;
-    else if (z > -50 && z < 20) return that.spread * 0.002;
-    else if (z > 20 && z < 50) return THREE.Terrain.EaseInOut((z - 20) / (50 - 20)) * that.spread * 0.002;
-    return 0;
-}
 
 function Regenerate() {
     let segments = parseInt(settings.segments, 10);
@@ -306,9 +229,9 @@ function Regenerate() {
         THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, regenOpts);
     }
 
-    scatterMeshes();
-
     lastOptions = regenOpts;
+
+    scatterMeshes(settings);
 }
 
 let edgeCorrection = function (that, vertices, options) {
@@ -380,11 +303,20 @@ function Settings() {
 
     window.rebuild = this.Regenerate = this.callRegenerate;
 
+    this.altitudeProbability = function(z, that) {
+        if (z > -80 && z < -50) return THREE.Terrain.EaseInOut((z + 80) / (-50 + 80)) * that.spread * 0.002;
+        else if (z > -50 && z < 20) return that.spread * 0.002;
+        else if (z > 20 && z < 50) return THREE.Terrain.EaseInOut((z - 20) / (50 - 20)) * that.spread * 0.002;
+        return 0;
+    }
+
     this.altitudeSpread = function (v, k) {
         return k % 4 === 0 && Math.random() < altitudeProbability(v.z, this);
     };
 
-    this["Scatter meshes"] = scatterMeshes;
+    this["Scatter meshes"] = function() {
+        scatterMeshes(settings);
+    }
 }
 
 window.addEventListener(
@@ -483,32 +415,6 @@ function applySmoothing(smoothing, o) {
     else if (smoothing === "Median") THREE.Terrain.SmoothMedian(g, o);
     THREE.Terrain.fromArray1D(m.geometry.attributes.position.array, g);
     THREE.Terrain.Normalize(m, o);
-}
-
-function buildTree() {
-    let green = new THREE.MeshLambertMaterial({ color: 0x2d4c1e });
-
-    let c0 = new THREE.Mesh(
-        new THREE.CylinderGeometry(2, 2, 12, 6, 1, true),
-        new THREE.MeshLambertMaterial({ color: 0x3d2817 }) // brown
-    );
-    c0.position.setY(6);
-
-    let c1 = new THREE.Mesh(new THREE.CylinderGeometry(0, 10, 14, 8), green);
-    c1.position.setY(18);
-    let c2 = new THREE.Mesh(new THREE.CylinderGeometry(0, 9, 13, 8), green);
-    c2.position.setY(25);
-    let c3 = new THREE.Mesh(new THREE.CylinderGeometry(0, 8, 12, 8), green);
-    c3.position.setY(32);
-
-    let s = new THREE.Object3D();
-    s.add(c0);
-    s.add(c1);
-    s.add(c2);
-    s.add(c3);
-    s.scale.set(5, 1.25, 5);
-
-    return s;
 }
 
 function customInfluences(g, options) {
