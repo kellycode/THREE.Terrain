@@ -1,11 +1,32 @@
-function loadAnalyticsTemplate(templatePath, targetDivId, callback) {
+/**
+ * Utility method to round numbers to a given number of decimal places.
+ *
+ * Usage:
+ *   3.5.round(0) // 4
+ *   Math.random().round(4) // 0.8179
+ *   var a = 5532; a.round(-2) // 5500
+ *   Number.prototype.round(12345.6, -1) // 12350
+ *   32..round(-1) // 30 (two dots required since the first one is a decimal)
+ */
+Number.prototype.round = function (v, a) {
+    if (typeof a === "undefined") {
+        a = v;
+        v = this;
+    }
+    if (!a) a = 0;
+    var m = Math.pow(10, a | 0);
+    return Math.round(v * m) / m;
+};
+
+
+function loadAnalyticsTemplate(templatePath, targetDivId, demo) {
     fetch(templatePath)
         .then((response) => response.text())
         .then((template) => {
             const targetDiv = document.getElementById(targetDivId);
             if (targetDiv) {
                 targetDiv.innerHTML = template;
-                initAnalytics();
+                initAnalytics(demo);
             } else {
                 console.error(`Div with id "${targetDivId}" not found.`);
             }
@@ -13,8 +34,8 @@ function loadAnalyticsTemplate(templatePath, targetDivId, callback) {
         .catch((error) => console.error("Error loading template:", error));
 }
 
-function populateAnalytics() {
-    let analysis = THREE.Terrain.Analyze(terrainScene.children[0], regenOpts);
+function populateAnalytics(demo) {
+    let analysis = THREE.Terrain.Analyze(demo.terrainScene.children[0], demo.regenOpts);
     let deviations = getSummary(analysis);
     let prop;
 
@@ -38,7 +59,7 @@ function populateAnalytics() {
     }
 }
 
-function initAnalytics() {
+function initAnalytics(demo) {
     document.getElementById("show-analytics").classList.remove("visible");
     let analytics = document.getElementById("analytics");
     analytics.scrollTop = 0;
@@ -58,7 +79,7 @@ function initAnalytics() {
         false
     );
 
-    populateAnalytics();
+    populateAnalytics(demo);
 }
 
 function cleanAnalytic(val) {

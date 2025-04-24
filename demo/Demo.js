@@ -64,13 +64,13 @@ export class Demo {
         window.addEventListener(
             "resize",
             function () {
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                camera.aspect = renderer.domElement.width / renderer.domElement.height;
-                camera.updateProjectionMatrix();
-                fpsCamera.aspect = renderer.domElement.width / renderer.domElement.height;
-                fpsCamera.updateProjectionMatrix();
-                draw();
-            },
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.camera.aspect = this.renderer.domElement.width / this.renderer.domElement.height;
+                this.camera.updateProjectionMatrix();
+                this.fpsCamera.aspect = this.renderer.domElement.width / this.renderer.domElement.height;
+                this.fpsCamera.updateProjectionMatrix();
+                this.draw();
+            }.bind(this),
             false
         );
 
@@ -81,35 +81,37 @@ export class Demo {
                     this.mouseX = event.pageX;
                     this.mouseY = event.pageY;
                 }
-            },
+            }.bind(this),
             false
         );
 
         document.querySelector("#show-analytics").addEventListener(
             "click",
             function (event) {
-                loadAnalyticsTemplate("./demo/analytics.html", "analytics");
+                loadAnalyticsTemplate("./demo/analytics.html", "analytics", this);
                 // onload calls initAnalytics();
                 event.preventDefault();
-            },
+            }.bind(this),
             false
         );
     }
 
     watchFocus() {
         let _blurred = false;
+        
         window.addEventListener("focus", function () {
             if (_blurred) {
                 _blurred = false;
                 this.startAnimating();
                 this.controls.enabled = true;
             }
-        });
+        }.bind(this));
+        
         window.addEventListener("blur", function () {
             this.stopAnimating();
             _blurred = true;
             this.controls.enabled = false;
-        });
+        }.bind(this));
     }
 
     draw() {
@@ -272,7 +274,7 @@ export class Demo {
         // kind of arbitrary
         let heightmap = this.settings.heightmap === "heightmap.png";
 
-        let regenOpts = {
+        let regenOpts = this.regenOpts = {
             after: this.settings.after,
             easing: THREE.Terrain[this.settings.easing],
             heightmap: heightmap
