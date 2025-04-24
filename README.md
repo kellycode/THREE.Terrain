@@ -86,7 +86,7 @@ Export a terrain to a heightmap image:
 ```javascript
 // Returns a canvas with the heightmap drawn on it.
 // Append to your document body to view; right click to save as a PNG image.
-var canvas = THREE.Terrain.toHeightmap(
+var canvas = T3_Images.toHeightmap(
     // terrainScene.children[0] is the most detailed version of the terrain mesh
     terrainScene.children[0].geometry.attributes.position.array,
     { xSegments: 63, ySegments: 63 }

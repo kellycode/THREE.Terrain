@@ -1,4 +1,4 @@
-function DecoScene() {}
+// The Tree Factory
 
 function scatterMeshes(settings, terrainScene) {
     let segments = parseInt(settings.segments, 10);
@@ -22,31 +22,40 @@ function scatterMeshes(settings, terrainScene) {
         spread = settings.altitudeSpread;
     } else if (settings.scattering === "PerlinAltitude") {
         spread = (function () {
-            let helper = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, scatterOptions, 2, 0.125)();
-            let helperSpread = THREE.Terrain.InEaseOut(settings.spread * 0.01);
+            let helper = T3_Scatter.ScatterHelper(T3_Generators.Perlin, scatterOptions, 2, 0.125)();
+            let helperSpread = T3_Utility.InEaseOut(settings.spread * 0.01);
             return function (vertex, index) {
                 let rv = helper[index];
                 let place = false;
                 if (rv < helperSpread) {
                     place = true;
                 } else if (rv < helperSpread + 0.2) {
-                    place = THREE.Terrain.EaseInOut((rv - helperSpread) * 5) * helperSpread < Math.random();
+                    place = T3_Utility.EaseInOut((rv - helperSpread) * 5) * helperSpread < Math.random();
                 }
                 return Math.random() < settings.altitudeProbability(vertex.z, settings) * 5 && place;
             };
         })();
     } else {
-        spread = THREE.Terrain.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
-        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], scatterOptions, 2, 0.125);
+        spread = T3_Utility.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
+        if(settings.scattering === "Worley") {
+            // Worley wasn't handled so added this
+            randomness = T3_Scatter.ScatterHelper(T3_Worley[settings.scattering], scatterOptions, 2, 0.125);
+        } else {
+            randomness = T3_Scatter.ScatterHelper(T3_Generators[settings.scattering], scatterOptions, 2, 0.125);
+        }
+
+        
     }
+
     let geo = terrainScene.children[0].geometry;
 
     const previousDecoScene = terrainScene.getObjectByName("decoScene");
+
     if (previousDecoScene) {
         terrainScene.remove(previousDecoScene);
     }
 
-    decoScene = THREE.Terrain.ScatterMeshes(geo, {
+    decoScene = T3_Scatter.ScatterMeshes(geo, {
         mesh: buildTree(),
         w: segments,
         h: Math.round(segments * settings["width:length ratio"]),

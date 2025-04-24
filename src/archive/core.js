@@ -112,7 +112,7 @@ THREE.Terrain = function(options) {
     // Assign elevation data to the terrain plane from a heightmap or function.
     var zs = THREE.Terrain.toArray1D(mesh.geometry.attributes.position.array);
     if (options.heightmap instanceof HTMLCanvasElement || options.heightmap instanceof Image) {
-        THREE.Terrain.fromHeightmap(zs, options);
+        T3_Images.fromHeightmap(zs, options);
     }
     else if (typeof options.heightmap === 'function') {
         options.heightmap(zs, options);
@@ -145,15 +145,15 @@ THREE.Terrain = function(options) {
 THREE.Terrain.Normalize = function(mesh, options) {
     var zs = THREE.Terrain.toArray1D(mesh.geometry.attributes.position.array);
     if (options.turbulent) {
-        THREE.Terrain.Turbulence(zs, options);
+        T3_Filters.Turbulence(zs, options);
     }
     if (options.steps > 1) {
-        THREE.Terrain.Step(zs, options.steps);
-        THREE.Terrain.Smooth(zs, options);
+        T3_Filters.Step(zs, options.steps);
+        T3_Filters.Smooth(zs, options);
     }
 
     // Keep the terrain within the allotted height range if necessary, and do easing.
-    THREE.Terrain.Clamp(zs, options);
+    T3_Filters.Clamp(zs, options);
 
     // Call the "after" callback
     if (typeof options.after === 'function') {
@@ -312,7 +312,7 @@ THREE.Terrain.fromArray1D = function(vertices, src) {
 /**
  * Generate a 1D array containing random heightmap data.
  *
- * This is like {@link THREE.Terrain.toHeightmap} except that instead of
+ * This is like {@link T3_Images.toHeightmap} except that instead of
  * generating the Three.js mesh and material information you can just get the
  * height data.
  *
@@ -332,7 +332,7 @@ THREE.Terrain.heightmapArray = function(method, options) {
     options.maxHeight = typeof options.maxHeight === 'undefined' ? 1 : options.maxHeight;
     options.stretch = options.stretch || false;
     method(arr, options);
-    THREE.Terrain.Clamp(arr, options);
+    T3_Filters.Clamp(arr, options);
     return arr;
 };
 

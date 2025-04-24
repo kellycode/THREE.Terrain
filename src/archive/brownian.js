@@ -137,6 +137,6 @@ THREE.Terrain.Brownian = function(g, options) {
     }
 
     // Erase artifacts.
-    THREE.Terrain.Smooth(g, options);
-    THREE.Terrain.Smooth(g, options);
+    T3_Filters.Smooth(g, options);
+    T3_Filters.Smooth(g, options);
 };

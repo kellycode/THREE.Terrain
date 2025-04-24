@@ -35,7 +35,7 @@ function loadAnalyticsTemplate(templatePath, targetDivId, demo) {
 }
 
 function populateAnalytics(demo) {
-    let analysis = THREE.Terrain.Analyze(demo.terrainScene.children[0], demo.regenOpts);
+    let analysis = T3_Analyze.Analyze(demo.terrainScene.children[0], demo.regenOpts);
     let deviations = getSummary(analysis);
     let prop;
 

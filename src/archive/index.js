@@ -226,7 +226,7 @@ function Regenerate() {
 
     if (he) {
         regenOpts.heightmap = he;
-        THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, regenOpts);
+        T3_Images.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, regenOpts);
     }
 
     lastOptions = regenOpts;

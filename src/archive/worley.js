@@ -91,7 +91,7 @@
             }
         }
         // We set the heights to distances so now we need to normalize
-        THREE.Terrain.Clamp(g, {
+        T3_Filters.Clamp(g, {
             maxHeight: options.maxHeight,
             minHeight: options.minHeight,
             stretch: true,

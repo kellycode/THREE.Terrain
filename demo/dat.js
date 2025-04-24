@@ -53,7 +53,7 @@ function setupDatGui(settings) {
             settings.applySmoothing(val, settings.lastOptions);
             settings["Scatter meshes"](settings);
             if (settings.lastOptions.heightmap) {
-                THREE.Terrain.toHeightmap(settings.terrainScene.children[0].geometry.attributes.position.array, settings.lastOptions);
+                T3_Images.toHeightmap(settings.terrainScene.children[0].geometry.attributes.position.array, settings.lastOptions);
             }
         });
 

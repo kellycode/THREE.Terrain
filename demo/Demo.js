@@ -232,13 +232,14 @@ export class Demo {
             10000
         );
         this.scene.add(this.fpsCamera);
-        this.controls = new THREE.FirstPersonControls(this.fpsCamera, this.renderer.domElement);
+        this.controls = new OrbitControls(this.fpsCamera, this.renderer.domElement);
         this.controls.enabled = false;
         this.controls.movementSpeed = 100;
         this.controls.lookSpeed = 0.075;
     }
 
     setupWorld() {
+
         // sky
         let t1 = this.preloadedTextures["demo/img/sky1.jpg"];
         t1.minFilter = THREE.LinearFilter; // Texture is not a power-of-two size; use smoother interpolation.
@@ -251,12 +252,15 @@ export class Demo {
 
         // water
         this.water = new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 16, 16),
+            new THREE.PlaneGeometry(16384 + 1024, 16384 + 1024, 16, 16),
             new THREE.MeshLambertMaterial({ color: 0x006ba0, transparent: true, opacity: 0.6 })
         );
         this.water.position.y = -99;
         this.water.rotation.x = -0.5 * Math.PI;
         this.scene.add(this.water);
+
+        //const ambient = new THREE.AmbientLight(0x404040); // soft white light
+        //this.scene.add(ambient);
 
         // directional light
         this.skyLight = new THREE.DirectionalLight(this.skyLightColor, 1.5);
@@ -264,7 +268,7 @@ export class Demo {
         this.scene.add(this.skyLight);
 
         // directional light
-        let light = new THREE.DirectionalLight(0xc3eaff, 0.75);
+        let light = new THREE.DirectionalLight(0xc3eaff, 1.5);
         light.position.set(-1, -0.5, -1);
         this.scene.add(light);
     }
@@ -276,12 +280,12 @@ export class Demo {
 
         let regenOpts = this.regenOpts = {
             after: this.settings.after,
-            easing: THREE.Terrain[this.settings.easing],
+            easing: T3_Utility[this.settings.easing],
             heightmap: heightmap
                 ? this.heightmapImage
                 : this.settings.heightmap === "influences"
                 ? this.customInfluences
-                : THREE.Terrain[this.settings.heightmap],
+                : T3_Generators[this.settings.heightmap],
             material:
                 this.settings.texture == "Wireframe"
                     ? this.settings.mat
@@ -301,7 +305,7 @@ export class Demo {
 
         this.scene.remove(this.terrainScene);
 
-        this.terrainScene = THREE.Terrain(regenOpts);
+        this.terrainScene = T3_TerrainCore.Terrain(regenOpts);
 
         this.applySmoothing(this.settings.smoothing, regenOpts);
 
@@ -313,7 +317,7 @@ export class Demo {
 
         if (he) {
             regenOpts.heightmap = he;
-            THREE.Terrain.toHeightmap(this.terrainScene.children[0].geometry.attributes.position.array, regenOpts);
+            T3_Images.toHeightmap(this.terrainScene.children[0].geometry.attributes.position.array, regenOpts);
         }
 
         this.lastOptions = regenOpts;
@@ -323,14 +327,14 @@ export class Demo {
 
     edgeCorrection = function (that, vertices, options) {
         if (that.edgeDirection !== "Normal") {
-            (that.edgeType === "Box" ? THREE.Terrain.Edges : THREE.Terrain.RadialEdges)(
+            (that.edgeType === "Box" ? T3_Filters.Edges : T3_Filters.RadialEdges)(
                 vertices,
                 options,
                 that.edgeDirection === "Up" ? true : false,
                 that.edgeType === "Box"
                     ? that.edgeDistance
                     : Math.min(options.xSize, options.ySize) * 0.5 - that.edgeDistance,
-                THREE.Terrain[that.edgeCurve]
+                T3_Utility[that.edgeCurve]
             );
         }
     };
@@ -344,7 +348,7 @@ export class Demo {
         t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
 
         this.sand = new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
+            new THREE.PlaneGeometry(16384 + 1024, 16384 + 1024, 64, 64),
             new THREE.MeshLambertMaterial({ map: t1 })
         );
         this.sand.position.y = -101;
@@ -360,7 +364,7 @@ export class Demo {
         t2.repeat.set(2, 2);
         t2.needsUpdate = true;
 
-        this.blend = blend = THREE.Terrain.generateBlendedMaterial([
+        this.blend = blend = T3_Materials.generateBlendedMaterial([
             { texture: t1, repeat: { x: 6, y: 6 } },
             { texture: t2, levels: [-80, -35, 20, 50], repeat: { x: 6, y: 6 } },
             { texture: t3, levels: [20, 50, 60, 85], repeat: { x: 6, y: 6 } },
@@ -391,15 +395,15 @@ export class Demo {
         window.rebuild = this.callRegenerate;
 
         this.altitudeProbability = function (z, that) {
-            if (z > -80 && z < -50) return THREE.Terrain.EaseInOut((z + 80) / (-50 + 80)) * that.spread * 0.002;
+            if (z > -80 && z < -50) return T3_Utility.EaseInOut((z + 80) / (-50 + 80)) * that.spread * 0.002;
             else if (z > -50 && z < 20) return that.spread * 0.002;
-            else if (z > 20 && z < 50) return THREE.Terrain.EaseInOut((z - 20) / (50 - 20)) * that.spread * 0.002;
+            else if (z > 20 && z < 50) return T3_Utility.EaseInOut((z - 20) / (50 - 20)) * that.spread * 0.002;
             return 0;
         };
 
         this.altitudeSpread = function (v, k) {
             return k % 4 === 0 && Math.random() < this.altitudeProbability(v.z, this);
-        };
+        }.bind(this);
 
         this["Scatter meshes"] = function () {
             scatterMeshes(this.settings, this.terrainScene);
@@ -421,22 +425,22 @@ export class Demo {
 
     applySmoothing(smoothing, o) {
         let m = this.terrainScene.children[0];
-        let g = THREE.Terrain.toArray1D(m.geometry.attributes.position.array);
-        if (smoothing === "Conservative (0.5)") THREE.Terrain.SmoothConservative(g, o, 0.5);
-        if (smoothing === "Conservative (1)") THREE.Terrain.SmoothConservative(g, o, 1);
-        if (smoothing === "Conservative (10)") THREE.Terrain.SmoothConservative(g, o, 10);
-        else if (smoothing === "Gaussian (0.5, 7)") THREE.Terrain.Gaussian(g, o, 0.5, 7);
-        else if (smoothing === "Gaussian (1.0, 7)") THREE.Terrain.Gaussian(g, o, 1, 7);
-        else if (smoothing === "Gaussian (1.5, 7)") THREE.Terrain.Gaussian(g, o, 1.5, 7);
-        else if (smoothing === "Gaussian (1.0, 5)") THREE.Terrain.Gaussian(g, o, 1, 5);
-        else if (smoothing === "Gaussian (1.0, 11)") THREE.Terrain.Gaussian(g, o, 1, 11);
-        else if (smoothing === "GaussianBox") THREE.Terrain.GaussianBoxBlur(g, o, 1, 3);
-        else if (smoothing === "Mean (0)") THREE.Terrain.Smooth(g, o, 0);
-        else if (smoothing === "Mean (1)") THREE.Terrain.Smooth(g, o, 1);
-        else if (smoothing === "Mean (8)") THREE.Terrain.Smooth(g, o, 8);
-        else if (smoothing === "Median") THREE.Terrain.SmoothMedian(g, o);
-        THREE.Terrain.fromArray1D(m.geometry.attributes.position.array, g);
-        THREE.Terrain.Normalize(m, o);
+        let g = T3_Utility.toArray1D(m.geometry.attributes.position.array);
+        if (smoothing === "Conservative (0.5)") T3_Filters.SmoothConservative(g, o, 0.5);
+        if (smoothing === "Conservative (1)") T3_Filters.SmoothConservative(g, o, 1);
+        if (smoothing === "Conservative (10)") T3_Filters.SmoothConservative(g, o, 10);
+        else if (smoothing === "Gaussian (0.5, 7)") T3_Gaussian.Gaussian(g, o, 0.5, 7);
+        else if (smoothing === "Gaussian (1.0, 7)") T3_Gaussian.Gaussian(g, o, 1, 7);
+        else if (smoothing === "Gaussian (1.5, 7)") T3_Gaussian.Gaussian(g, o, 1.5, 7);
+        else if (smoothing === "Gaussian (1.0, 5)") T3_Gaussian.Gaussian(g, o, 1, 5);
+        else if (smoothing === "Gaussian (1.0, 11)") T3_Gaussian.Gaussian(g, o, 1, 11);
+        else if (smoothing === "GaussianBox") T3_Gaussian.GaussianBoxBlur(g, o, 1, 3);
+        else if (smoothing === "Mean (0)") T3_Filters.Smooth(g, o, 0);
+        else if (smoothing === "Mean (1)") T3_Filters.Smooth(g, o, 1);
+        else if (smoothing === "Mean (8)") T3_Filters.Smooth(g, o, 8);
+        else if (smoothing === "Median") T3_Filters.SmoothMedian(g, o);
+        T3_Utility.fromArray1D(m.geometry.attributes.position.array, g);
+        T3_Utility.Normalize(m, o);
     }
 
     customInfluences(g, options) {
@@ -448,53 +452,58 @@ export class Demo {
         }
         clonedOptions.maxHeight = options.maxHeight * 0.67;
         clonedOptions.minHeight = options.minHeight * 0.67;
-        THREE.Terrain.DiamondSquare(g, clonedOptions);
 
-        let radius = Math.min(options.xSize, options.ySize) * 0.21,
-            height = options.maxHeight * 0.8;
-        THREE.Terrain.Influence(
+        T3_Generators.DiamondSquare(g, clonedOptions);
+
+        let radius = Math.min(options.xSize, options.ySize) * 0.21;
+        let height = options.maxHeight * 0.8;
+
+        T3_Influences.Influence(
             g,
             options,
-            THREE.Terrain.Influences.Hill,
+            T3_Influences.Influences.Hill,
             0.25,
             0.25,
             radius,
             height,
             THREE.AdditiveBlending,
-            THREE.Terrain.Linear
+            T3_Utility.Linear
         );
-        THREE.Terrain.Influence(
+
+        T3_Influences.Influence(
             g,
             options,
-            THREE.Terrain.Influences.Mesa,
+            T3_Influences.Influences.Mesa,
             0.75,
             0.75,
             radius,
             height,
             THREE.SubtractiveBlending,
-            THREE.Terrain.EaseInStrong
+            T3_Utility.EaseInStrong
         );
-        THREE.Terrain.Influence(
+
+        T3_Influences.Influence(
             g,
             options,
-            THREE.Terrain.Influences.Flat,
+            T3_Influences.Influences.Flat,
             0.75,
             0.25,
             radius,
             options.maxHeight,
             THREE.NormalBlending,
-            THREE.Terrain.EaseIn
+            T3_Utility.EaseIn
         );
-        THREE.Terrain.Influence(
+
+        T3_Influences.Influence(
             g,
             options,
-            THREE.Terrain.Influences.Volcano,
+            T3_Influences.Influences.Volcano,
             0.25,
             0.75,
             radius,
             options.maxHeight,
             THREE.NormalBlending,
-            THREE.Terrain.EaseInStrong
+            T3_Utility.EaseInStrong
         );
     }
 }

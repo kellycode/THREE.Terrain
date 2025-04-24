@@ -171,7 +171,7 @@ THREE.Terrain.DiamondSquare = function(g, options) {
         }
     }
 
-    // THREE.Terrain.SmoothConservative(g, options);
+    // T3_Filters.SmoothConservative(g, options);
 };
 
 /**
@@ -389,12 +389,12 @@ THREE.Terrain.HillIsland = (function() {
  * Parameters are the same as those for {@link THREE.Terrain.DiamondSquare}.
  */
 THREE.Terrain.Perlin = function(g, options) {
-    noise.seed(Math.random());
+    T3_Noise.seed(Math.random());
     var range = (options.maxHeight - options.minHeight) * 0.5,
         divisor = (Math.min(options.xSegments, options.ySegments) + 1) / options.frequency;
     for (var i = 0, xl = options.xSegments + 1; i < xl; i++) {
         for (var j = 0, yl = options.ySegments + 1; j < yl; j++) {
-            g[j * xl + i] += noise.perlin(i / divisor, j / divisor) * range;
+            g[j * xl + i] += T3_Noise.perlin(i / divisor, j / divisor) * range;
         }
     }
 };
@@ -408,7 +408,7 @@ THREE.Terrain.PerlinDiamond = function(g, options) {
     THREE.Terrain.MultiPass(g, options, [
         { method: THREE.Terrain.Perlin },
         { method: THREE.Terrain.DiamondSquare, amplitude: 0.75 },
-        { method: function(g, o) { return THREE.Terrain.SmoothMedian(g, o); } },
+        { method: function(g, o) { return T3_Filters.SmoothMedian(g, o); } },
     ]);
 };
 
@@ -552,7 +552,7 @@ THREE.Terrain.SimplexLayers = function(g, options) {
 
         // White noise creates some weird artifacts; fix them.
         // THREE.Terrain.Smooth(g, options, 1);
-        THREE.Terrain.Clamp(g, {
+        T3_Filters.Clamp(g, {
             maxHeight: options.maxHeight,
             minHeight: options.minHeight,
             stretch: true,
@@ -592,5 +592,5 @@ THREE.Terrain.Weierstrass = function(g, options) {
             g[j * xl + i] += sum * range;
         }
     }
-    THREE.Terrain.Clamp(g, options);
+    T3_Filters.Clamp(g, options);
 };
