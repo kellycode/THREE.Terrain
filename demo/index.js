@@ -3,14 +3,14 @@ let scene;
 let renderer;
 let clock;
 let player;
-let terrainScene;
+let terrainScene; // dat
 // decoration or trees in this case
 let decoScene;
-let lastOptions;
-let controls = {};
-let fpsCamera;
+let lastOptions; // dat
+let controls = {}; // dat
+let fpsCamera; // dat
 let skyDome;
-let skyLight;
+let skyLight; // dat
 const skyLightColor = new THREE.Color(0xe8bdb0);
 let sand;
 let water; // jscs:ignore requireLineBreakAfterVariableAssignment (jscs is deprecated)
@@ -19,18 +19,20 @@ let frameDelta = 0;
 let paused = true;
 let mouseX = 0;
 let mouseY = 0;
-let useFPS = false;
+let useFPS = false; // dat
 let preloadedTextures;
-let stats;
+let stats; // dat
 let analyticsActive = false;
-let settings;
+let settings; // dat
 let regenOpts;
 let elevationGraph;
 let slopeGraph;
 let analyticsValues;
 let treeMesh = buildTree();
+let gray;
+let mat;
 
-var heightmapImage = new Image();
+let heightmapImage = new Image();
 heightmapImage.src = "demo/img/heightmap.png";
 
 let settingOptions = {
@@ -53,6 +55,8 @@ let settingOptions = {
     "Light color": "#" + skyLightColor.getHexString(),
     spread: 60,
     scattering: "PerlinAltitude",
+    mat: new THREE.MeshBasicMaterial({ color: 0x5566aa, wireframe: true }),
+    gray: new THREE.MeshPhongMaterial({ color: 0x88aaaa, specular: 0x444455, shininess: 10 })
 };
 
 function animate() {
@@ -124,7 +128,7 @@ function setup(preloaded) {
     // uses world items
     settings = new Settings();
     watchFocus();
-    setupDatGui();
+    setupDatGui(settings);
     startAnimating();
     // uses settings
     Regenerate();
@@ -186,7 +190,7 @@ function setupWorld() {
     scene.add(skyLight);
 
     // directional light
-    var light = new THREE.DirectionalLight(0xc3eaff, 0.75);
+    let light = new THREE.DirectionalLight(0xc3eaff, 0.75);
     light.position.set(-1, -0.5, -1);
     scene.add(light);
 }
@@ -196,7 +200,7 @@ function scatterMeshes() {
     let spread;
     let randomness;
 
-    var scatterOptions = {
+    let scatterOptions = {
         xSegments: segments,
         ySegments: Math.round(segments * settings["width:length ratio"]),
     };
@@ -208,11 +212,11 @@ function scatterMeshes() {
         spread = settings.altitudeSpread;
     } else if (settings.scattering === "PerlinAltitude") {
         spread = (function () {
-            var helper = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, scatterOptions, 2, 0.125)();
-            var helperSpread = THREE.Terrain.InEaseOut(settings.spread * 0.01);
+            let helper = THREE.Terrain.ScatterHelper(THREE.Terrain.Perlin, scatterOptions, 2, 0.125)();
+            let helperSpread = THREE.Terrain.InEaseOut(settings.spread * 0.01);
             return function (vertex, index) {
-                var rv = helper[index];
-                var place = false;
+                let rv = helper[index];
+                let place = false;
                 if (rv < helperSpread) {
                     place = true;
                 } else if (rv < helperSpread + 0.2) {
@@ -225,7 +229,7 @@ function scatterMeshes() {
         spread = THREE.Terrain.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
         randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], o, 2, 0.125);
     }
-    var geo = terrainScene.children[0].geometry;
+    let geo = terrainScene.children[0].geometry;
 
     if (decoScene) {
         terrainScene.remove(decoScene);
@@ -243,11 +247,12 @@ function scatterMeshes() {
     });
 
     if (decoScene) {
+        // decoScene.children[0] needs iteration
         // if (settings.texture == 'Wireframe') {
-        //   decoScene.children[0].material = decoMat;
+        //   decoScene.children[0].material = settings.mat;
         // }
         // else if (settings.texture == 'Grayscale') {
-        //   decoScene.children[0].material = gray;
+        //   decoScene.children[0].material = settings.gray;
         // }
         terrainScene.add(decoScene);
     }
@@ -273,7 +278,7 @@ function Regenerate() {
             : settings.heightmap === "influences"
             ? customInfluences
             : THREE.Terrain[settings.heightmap],
-        material: settings.texture == "Wireframe" ? mat : settings.texture == "Blended" ? settings.blend : gray,
+        material: settings.texture == "Wireframe" ? settings.mat : settings.texture == "Blended" ? settings.blend : settings.gray,
         maxHeight: settings.maxHeight - 100,
         minHeight: -100,
         steps: settings.steps,
@@ -295,7 +300,7 @@ function Regenerate() {
 
     skyDome.visible = sand.visible = water.visible = settings.texture != "Wireframe";
 
-    var he = document.getElementById("heightmap");
+    let he = document.getElementById("heightmap");
 
     if (he) {
         regenOpts.heightmap = he;
@@ -307,7 +312,7 @@ function Regenerate() {
     lastOptions = regenOpts;
 }
 
-var edgeCorrection = function (that, vertices, options) {
+let edgeCorrection = function (that, vertices, options) {
     if (that.edgeDirection !== "Normal") {
         (that.edgeType === "Box" ? THREE.Terrain.Edges : THREE.Terrain.RadialEdges)(
             vertices,
@@ -322,11 +327,9 @@ var edgeCorrection = function (that, vertices, options) {
 };
 
 function Settings() {
-    var that = this;
-    var mat = new THREE.MeshBasicMaterial({ color: 0x5566aa, wireframe: true });
-    var gray = new THREE.MeshPhongMaterial({ color: 0x88aaaa, specular: 0x444455, shininess: 10 });
-    var blend;
-    var loader = new THREE.TextureLoader();
+    let that = this;
+    let blend;
+    let loader = new THREE.TextureLoader();
 
     let t1 = preloadedTextures["demo/img/sand1.jpg"];
     t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
@@ -385,125 +388,6 @@ function Settings() {
     this["Scatter meshes"] = scatterMeshes;
 }
 
-function setupDatGui() {
-    console.log("Setting up dat pita");
-
-    var gui = new dat.GUI();
-    //var settings = new Settings();
-    var heightmapFolder = gui.addFolder("Heightmap");
-
-    heightmapFolder
-        .add(settings, "heightmap", [
-            "Brownian",
-            "Cosine",
-            "CosineLayers",
-            "DiamondSquare",
-            "Fault",
-            "heightmap.png",
-            "Hill",
-            "HillIsland",
-            "influences",
-            "Particles",
-            "Perlin",
-            "PerlinDiamond",
-            "PerlinLayers",
-            "Simplex",
-            "SimplexLayers",
-            "Value",
-            "Weierstrass",
-            "Worley",
-        ])
-        .onFinishChange(settings.Regenerate);
-    heightmapFolder
-        .add(settings, "easing", ["Linear", "EaseIn", "EaseInWeak", "EaseOut", "EaseInOut", "InEaseOut"])
-        .onFinishChange(settings.Regenerate);
-    heightmapFolder
-        .add(settings, "smoothing", [
-            "Conservative (0.5)",
-            "Conservative (1)",
-            "Conservative (10)",
-            "Gaussian (0.5, 7)",
-            "Gaussian (1.0, 7)",
-            "Gaussian (1.5, 7)",
-            "Gaussian (1.0, 5)",
-            "Gaussian (1.0, 11)",
-            "GaussianBox",
-            "Mean (0)",
-            "Mean (1)",
-            "Mean (8)",
-            "Median",
-            "None",
-        ])
-        .onChange(function (val) {
-            applySmoothing(val, lastOptions);
-            settings["Scatter meshes"](settings);
-            if (lastOptions.heightmap) {
-                THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, lastOptions);
-            }
-        });
-    heightmapFolder.add(settings, "segments", 7, 127).step(1).onFinishChange(settings.Regenerate);
-    heightmapFolder.add(settings, "steps", 1, 8).step(1).onFinishChange(settings.Regenerate);
-    heightmapFolder.add(settings, "turbulent").onFinishChange(settings.Regenerate);
-    heightmapFolder.open();
-    var decoFolder = gui.addFolder("Decoration");
-    decoFolder.add(settings, "texture", ["Blended", "Grayscale", "Wireframe"]).onFinishChange(settings.Regenerate);
-    decoFolder
-        .add(settings, "scattering", [
-            "Altitude",
-            "Linear",
-            "Cosine",
-            "CosineLayers",
-            "DiamondSquare",
-            "Particles",
-            "Perlin",
-            "PerlinAltitude",
-            "Simplex",
-            "Value",
-            "Weierstrass",
-            "Worley",
-        ])
-        .onFinishChange(settings["Scatter meshes"]);
-    decoFolder.add(settings, "spread", 0, 100).step(1).onFinishChange(settings["Scatter meshes"]);
-    decoFolder.addColor(settings, "Light color").onChange(function (val) {
-        skyLight.color.set(val);
-    });
-    var sizeFolder = gui.addFolder("Size");
-    sizeFolder.add(settings, "size", 1024, 3072).step(256).onFinishChange(settings.Regenerate);
-    sizeFolder.add(settings, "maxHeight", 2, 300).step(2).onFinishChange(settings.Regenerate);
-    sizeFolder.add(settings, "width:length ratio", 0.2, 2).step(0.05).onFinishChange(settings.Regenerate);
-    var edgesFolder = gui.addFolder("Edges");
-    edgesFolder.add(settings, "edgeType", ["Box", "Radial"]).onFinishChange(settings.Regenerate);
-    edgesFolder.add(settings, "edgeDirection", ["Normal", "Up", "Down"]).onFinishChange(settings.Regenerate);
-    edgesFolder
-        .add(settings, "edgeCurve", ["Linear", "EaseIn", "EaseOut", "EaseInOut"])
-        .onFinishChange(settings.Regenerate);
-    edgesFolder.add(settings, "edgeDistance", 0, 512).step(32).onFinishChange(settings.Regenerate);
-    gui.add(settings, "Flight mode").onChange(function (val) {
-        useFPS = val;
-        fpsCamera.position.x = 449;
-        fpsCamera.position.y = 311;
-        fpsCamera.position.z = 376;
-        controls.lookAt(terrainScene.children[0].position);
-        controls.update(0);
-        controls.enabled = false;
-        if (useFPS) {
-            document.getElementById("fpscontrols").className = "visible";
-            setTimeout(function () {
-                controls.enabled = true;
-            }, 1000);
-        } else {
-            document.getElementById("fpscontrols").className = "";
-        }
-    });
-    gui.add(settings, "Scatter meshes");
-    gui.add(settings, "Regenerate");
-
-    stats = new Stats();
-    stats.domElement.style = "position:absolute; right:0; bottom: 0; cursor: pointer; opacity: 0.9; z-index: 10000;";
-    stats.domElement.id = "StatsContainer";
-    document.body.appendChild(stats.domElement);
-}
-
 window.addEventListener(
     "resize",
     function () {
@@ -545,7 +429,7 @@ document.addEventListener(
 
 // Stop animating if the window lost focus
 function watchFocus() {
-    var _blurred = false;
+    let _blurred = false;
     window.addEventListener("focus", function () {
         if (_blurred) {
             _blurred = false;
@@ -560,84 +444,19 @@ function watchFocus() {
     });
 }
 
-function loadTemplate(templatePath, targetDivId, callback) {
-    fetch(templatePath)
-        .then((response) => response.text())
-        .then((template) => {
-            const targetDiv = document.getElementById(targetDivId);
-            if (targetDiv) {
-                targetDiv.innerHTML = template;
-                initAnalytics();
-            } else {
-                console.error(`Div with id "${targetDivId}" not found.`);
-            }
-        })
-        .catch((error) => console.error("Error loading template:", error));
-}
-
-function populateAnalytics() {
-    let analysis = THREE.Terrain.Analyze(terrainScene.children[0], regenOpts);
-    let deviations = getSummary(analysis);
-    let prop;
-
-    analysis.elevation.drawHistogram(elevationGraph, 10);
-
-    analysis.slope.drawHistogram(slopeGraph, 10);
-
-    for (var i = 0, l = analyticsValues.length; i < l; i++) {
-        prop = analyticsValues[i].getAttribute("data-property").split(".");
-        var analytic = analysis[prop[0]][prop[1]];
-        if (analyticsValues[i].getAttribute("class").split(/\s+/).indexOf("percent") !== -1) {
-            analytic *= 100;
-        }
-        analyticsValues[i].textContent = cleanAnalytic(analytic);
-    }
-
-    for (prop in deviations) {
-        if (deviations.hasOwnProperty(prop)) {
-            document.querySelector('.summary-value[data-property="' + prop + '"]').textContent = deviations[prop];
-        }
-    }
-}
-
-function initAnalytics() {
-    document.getElementById("show-analytics").classList.remove("visible");
-    var analytics = document.getElementById("analytics");
-    analytics.scrollTop = 0;
-    analytics.classList.add("visible");
-
-    elevationGraph = document.getElementById("elevation-graph");
-    slopeGraph = document.getElementById("slope-graph");
-    analyticsValues = document.getElementsByClassName("value");
-
-    document.querySelector("#analytics .close").addEventListener(
-        "click",
-        function (event) {
-            event.preventDefault();
-            document.getElementById("analytics").classList.remove("visible");
-            document.getElementById("show-analytics").classList.add("visible");
-        },
-        false
-    );
-
-    populateAnalytics();
-}
 
 document.querySelector("#show-analytics").addEventListener(
     "click",
     function (event) {
-        loadTemplate("./demo/analytics.html", "analytics");
+        loadAnalyticsTemplate("./demo/analytics.html", "analytics");
+        // onload calls initAnalytics();
         event.preventDefault();
-        //document.getElementById("show-analytics").classList.remove("visible");
-        //var analytics = document.getElementById("analytics");
-        //analytics.scrollTop = 0;
-        //analytics.classList.add("visible");
     },
     false
 );
 
 function __printCameraData() {
-    var s = "";
+    let s = "";
     s += "camera.position.x = " + Math.round(fpsCamera.position.x) + ";\n";
     s += "camera.position.y = " + Math.round(fpsCamera.position.y) + ";\n";
     s += "camera.position.z = " + Math.round(fpsCamera.position.z) + ";\n";
@@ -648,8 +467,8 @@ function __printCameraData() {
 }
 
 function applySmoothing(smoothing, o) {
-    var m = terrainScene.children[0];
-    var g = THREE.Terrain.toArray1D(m.geometry.attributes.position.array);
+    let m = terrainScene.children[0];
+    let g = THREE.Terrain.toArray1D(m.geometry.attributes.position.array);
     if (smoothing === "Conservative (0.5)") THREE.Terrain.SmoothConservative(g, o, 0.5);
     if (smoothing === "Conservative (1)") THREE.Terrain.SmoothConservative(g, o, 1);
     if (smoothing === "Conservative (10)") THREE.Terrain.SmoothConservative(g, o, 10);
@@ -668,22 +487,22 @@ function applySmoothing(smoothing, o) {
 }
 
 function buildTree() {
-    var green = new THREE.MeshLambertMaterial({ color: 0x2d4c1e });
+    let green = new THREE.MeshLambertMaterial({ color: 0x2d4c1e });
 
-    var c0 = new THREE.Mesh(
+    let c0 = new THREE.Mesh(
         new THREE.CylinderGeometry(2, 2, 12, 6, 1, true),
         new THREE.MeshLambertMaterial({ color: 0x3d2817 }) // brown
     );
     c0.position.setY(6);
 
-    var c1 = new THREE.Mesh(new THREE.CylinderGeometry(0, 10, 14, 8), green);
+    let c1 = new THREE.Mesh(new THREE.CylinderGeometry(0, 10, 14, 8), green);
     c1.position.setY(18);
-    var c2 = new THREE.Mesh(new THREE.CylinderGeometry(0, 9, 13, 8), green);
+    let c2 = new THREE.Mesh(new THREE.CylinderGeometry(0, 9, 13, 8), green);
     c2.position.setY(25);
-    var c3 = new THREE.Mesh(new THREE.CylinderGeometry(0, 8, 12, 8), green);
+    let c3 = new THREE.Mesh(new THREE.CylinderGeometry(0, 8, 12, 8), green);
     c3.position.setY(32);
 
-    var s = new THREE.Object3D();
+    let s = new THREE.Object3D();
     s.add(c0);
     s.add(c1);
     s.add(c2);
@@ -694,8 +513,8 @@ function buildTree() {
 }
 
 function customInfluences(g, options) {
-    var clonedOptions = {};
-    for (var opt in options) {
+    let clonedOptions = {};
+    for (let opt in options) {
         if (options.hasOwnProperty(opt)) {
             clonedOptions[opt] = options[opt];
         }
@@ -704,7 +523,7 @@ function customInfluences(g, options) {
     clonedOptions.minHeight = options.minHeight * 0.67;
     THREE.Terrain.DiamondSquare(g, clonedOptions);
 
-    var radius = Math.min(options.xSize, options.ySize) * 0.21,
+    let radius = Math.min(options.xSize, options.ySize) * 0.21,
         height = options.maxHeight * 0.8;
     THREE.Terrain.Influence(
         g,
@@ -752,89 +571,7 @@ function customInfluences(g, options) {
     );
 }
 
-function cleanAnalytic(val) {
-    if (Array.isArray(val)) {
-        if (val.length === 1) {
-            val = val[0];
-        } else {
-            var str = val
-                .map(function (v) {
-                    return Math.round(v);
-                })
-                .join(", ");
-            if (str.length > 9) str = val.join(",");
-            if (str.length > 9) str = str.substring(0, str.lastIndexOf(",", 7)) + ",&hellip;";
-            return str;
-        }
-    }
-    var valIntStr = (val | 0) + "",
-        c = "";
-    if ((val | 0) === 0 && val < 0) {
-        valIntStr = "-" + valIntStr;
-    }
-    while (valIntStr.length + c.length < 5) {
-        c += " ";
-    }
-    return c + (typeof val === "undefined" || val === null ? NaN : val).round(3);
-}
 
-var moments = {
-    "elevation.stdev": {
-        mean: 42.063,
-        stdev: 6.353,
-    },
-    "elevation.pearsonSkew": {
-        // mean: 0.100,
-        // stdev: 0.566,
-        levels: {
-            "+high": -1.032,
-            "+medium": -0.277,
-            low: 0.666,
-            "-medium": 1.232,
-            "-high": Infinity,
-        },
-    },
-    "slope.stdev": {
-        mean: 10.154,
-        stdev: 3.586,
-    },
-    "slope.groeneveldMeedenSkew": {
-        // mean: -0.021,
-        // stdev: 0.163,
-        levels: {
-            "+high": -0.347,
-            "+medium": -0.13,
-            low: 0.088,
-            "-medium": 0.305,
-            "-high": Infinity,
-        },
-    },
-    "roughness.jaggedness": {
-        levels: [0.006, 0.02, 0.044, 0.1],
-    },
-    "roughness.terrainRuggednessIndex": {
-        levels: [1, 2.2, 3.5, 4.8],
-    },
-};
-
-function getSummary(analytics) {
-    var results = {},
-        deviationBuckets = [-2, -2 / 3, 2 / 3, 2];
-    for (var prop in moments) {
-        if (moments.hasOwnProperty(prop)) {
-            var averageProp = moments[prop],
-                split = prop.split("."),
-                sampleProp = analytics[split[0]][split[1]];
-            if (typeof averageProp.mean === "number") {
-                results[prop] = (sampleProp - averageProp.mean) / averageProp.stdev;
-                results[prop] = numberToCategory(results[prop], deviationBuckets);
-            } else {
-                results[prop] = numberToCategory(sampleProp, averageProp.levels);
-            }
-        }
-    }
-    return results;
-}
 
 /**
  * Classify a numeric input.
@@ -866,11 +603,11 @@ function numberToCategory(value, buckets) {
         if (value < buckets[3]) return "high";
         if (value >= buckets[3]) return "very high";
     }
-    var keys = Object.keys(buckets).sort(function (a, b) {
+    let keys = Object.keys(buckets).sort(function (a, b) {
             return buckets[a] - buckets[b];
         }),
         l = keys.length;
-    for (var i = 0; i < l; i++) {
+    for (let i = 0; i < l; i++) {
         if (value < buckets[keys[i]]) {
             return keys[i];
         }
@@ -884,7 +621,7 @@ function numberToCategory(value, buckets) {
  * Usage:
  *   3.5.round(0) // 4
  *   Math.random().round(4) // 0.8179
- *   var a = 5532; a.round(-2) // 5500
+ *   let a = 5532; a.round(-2) // 5500
  *   Number.prototype.round(12345.6, -1) // 12350
  *   32..round(-1) // 30 (two dots required since the first one is a decimal)
  */
@@ -894,6 +631,6 @@ Number.prototype.round = function (v, a) {
         v = this;
     }
     if (!a) a = 0;
-    var m = Math.pow(10, a | 0);
+    let m = Math.pow(10, a | 0);
     return Math.round(v * m) / m;
 };
