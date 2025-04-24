@@ -36,9 +36,13 @@
         <script src="demo/analytics.js"></script>
         <script src="demo/dat.js"></script>
         <script src="demo/decoScene.js"></script>
-        <script src="demo/index.js"></script>
+        <!-- <script src="demo/index.js"></script> -->
 
-        <script>
+        <script type="module">
+            import { Demo } from "./demo/Demo.js";
+
+            let demo = new Demo();
+
             let thisPath = "";
 
             let textures = [
@@ -51,10 +55,10 @@
 
             let callback = function(preloaded){
                 //console.log(preloaded)
-                setup(preloaded)
+                demo.setup(preloaded)
             }
 
-            preloadTextures(textures, callback);
+            demo.preloadTextures(textures, callback);
 
         </script>
     </body>

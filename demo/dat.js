@@ -26,11 +26,11 @@ function setupDatGui(settings) {
             "Weierstrass",
             "Worley",
         ])
-        .onFinishChange(settings.Regenerate);
+        .onFinishChange(settings.callRegenerate);
 
     heightmapFolder
         .add(settings, "easing", ["Linear", "EaseIn", "EaseInWeak", "EaseOut", "EaseInOut", "InEaseOut"])
-        .onFinishChange(settings.Regenerate);
+        .onFinishChange(settings.callRegenerate);
 
     heightmapFolder
         .add(settings, "smoothing", [
@@ -50,20 +50,20 @@ function setupDatGui(settings) {
             "None",
         ])
         .onChange(function (val) {
-            applySmoothing(val, lastOptions);
+            settings.applySmoothing(val, settings.lastOptions);
             settings["Scatter meshes"](settings);
-            if (lastOptions.heightmap) {
-                THREE.Terrain.toHeightmap(terrainScene.children[0].geometry.attributes.position.array, lastOptions);
+            if (settings.lastOptions.heightmap) {
+                THREE.Terrain.toHeightmap(settings.terrainScene.children[0].geometry.attributes.position.array, settings.lastOptions);
             }
         });
 
-    heightmapFolder.add(settings, "segments", 7, 127).step(1).onFinishChange(settings.Regenerate);
-    heightmapFolder.add(settings, "steps", 1, 8).step(1).onFinishChange(settings.Regenerate);
-    heightmapFolder.add(settings, "turbulent").onFinishChange(settings.Regenerate);
+    heightmapFolder.add(settings, "segments", 7, 127).step(1).onFinishChange(settings.callRegenerate);
+    heightmapFolder.add(settings, "steps", 1, 8).step(1).onFinishChange(settings.callRegenerate);
+    heightmapFolder.add(settings, "turbulent").onFinishChange(settings.callRegenerate);
     heightmapFolder.open();
 
     var decoFolder = gui.addFolder("Decoration");
-    decoFolder.add(settings, "texture", ["Blended", "Grayscale", "Wireframe"]).onFinishChange(settings.Regenerate);
+    decoFolder.add(settings, "texture", ["Blended", "Grayscale", "Wireframe"]).onFinishChange(settings.callRegenerate);
     decoFolder
         .add(settings, "scattering", [
             "Altitude",
@@ -79,38 +79,42 @@ function setupDatGui(settings) {
             "Weierstrass",
             "Worley",
         ])
-        .onFinishChange(settings["Scatter meshes"]);
+        .onFinishChange(function (val) {
+            settings["Scatter meshes"](settings);
+        });
 
-    decoFolder.add(settings, "spread", 0, 100).step(1).onFinishChange(settings["Scatter meshes"]);
+    decoFolder.add(settings, "spread", 0, 100).step(1).onFinishChange(function (val) {
+        settings["Scatter meshes"](settings);
+    });
     decoFolder.addColor(settings, "Light color").onChange(function (val) {
-        skyLight.color.set(val);
+        settings.skyLight.color.set(val);
     });
 
     var sizeFolder = gui.addFolder("Size");
-    sizeFolder.add(settings, "size", 1024, 3072).step(256).onFinishChange(settings.Regenerate);
-    sizeFolder.add(settings, "maxHeight", 2, 300).step(2).onFinishChange(settings.Regenerate);
-    sizeFolder.add(settings, "width:length ratio", 0.2, 2).step(0.05).onFinishChange(settings.Regenerate);
+    sizeFolder.add(settings, "size", 1024, 3072).step(256).onFinishChange(settings.callRegenerate);
+    sizeFolder.add(settings, "maxHeight", 2, 300).step(2).onFinishChange(settings.callRegenerate);
+    sizeFolder.add(settings, "width:length ratio", 0.2, 2).step(0.05).onFinishChange(settings.callRegenerate);
 
     var edgesFolder = gui.addFolder("Edges");
-    edgesFolder.add(settings, "edgeType", ["Box", "Radial"]).onFinishChange(settings.Regenerate);
-    edgesFolder.add(settings, "edgeDirection", ["Normal", "Up", "Down"]).onFinishChange(settings.Regenerate);
+    edgesFolder.add(settings, "edgeType", ["Box", "Radial"]).onFinishChange(settings.callRegenerate);
+    edgesFolder.add(settings, "edgeDirection", ["Normal", "Up", "Down"]).onFinishChange(settings.callRegenerate);
     edgesFolder
         .add(settings, "edgeCurve", ["Linear", "EaseIn", "EaseOut", "EaseInOut"])
-        .onFinishChange(settings.Regenerate);
-    edgesFolder.add(settings, "edgeDistance", 0, 512).step(32).onFinishChange(settings.Regenerate);
+        .onFinishChange(settings.callRegenerate);
+    edgesFolder.add(settings, "edgeDistance", 0, 512).step(32).onFinishChange(settings.callRegenerate);
 
     gui.add(settings, "Flight mode").onChange(function (val) {
-        useFPS = val;
-        fpsCamera.position.x = 449;
-        fpsCamera.position.y = 311;
-        fpsCamera.position.z = 376;
-        controls.lookAt(terrainScene.children[0].position);
-        controls.update(0);
-        controls.enabled = false;
-        if (useFPS) {
+        settings.useFPS = val;
+        settings.fpsCamera.position.x = 449;
+        settings.fpsCamera.position.y = 311;
+        settings.fpsCamera.position.z = 376;
+        settings.controls.lookAt(settings.terrainScene.children[0].position);
+        settings.controls.update(0);
+        settings.controls.enabled = false;
+        if (settings.useFPS) {
             document.getElementById("fpscontrols").className = "visible";
             setTimeout(function () {
-                controls.enabled = true;
+                settings.controls.enabled = true;
             }, 1000);
         } else {
             document.getElementById("fpscontrols").className = "";
@@ -119,8 +123,4 @@ function setupDatGui(settings) {
     gui.add(settings, "Scatter meshes");
     gui.add(settings, "Regenerate");
 
-    stats = new Stats();
-    stats.domElement.style = "position:absolute; right:0; bottom: 0; cursor: pointer; opacity: 0.9; z-index: 10000;";
-    stats.domElement.id = "StatsContainer";
-    document.body.appendChild(stats.domElement);
 }

@@ -144,3 +144,45 @@ function getSummary(analytics) {
     }
     return results;
 }
+
+/**
+ * Classify a numeric input.
+ *
+ * @param {Number} value
+ *   The number to classify.
+ * @param {Object/Number[]} [buckets=[-2, -2/3, 2/3, 2]]
+ *   An object or numeric array used to classify `value`. If `buckets` is an
+ *   array, the returned category will be the first of "very low," "low,"
+ *   "medium," and "high," in that order, where the correspondingly ordered
+ *   bucket value is higher than the `value` being classified, or "very high"
+ *   if all bucket values are smaller than the `value` being classified. If
+ *   `buckets` is an object, its values will be sorted, and the returned
+ *   category will be the key of the first bucket value that is higher than the
+ *   `value` being classified, or the key of the highest bucket value if the
+ *   `value` being classified is higher than all the values in `buckets`.
+ *
+ * @return {String}
+ *   The category into which the numeric input was classified.
+ */
+function numberToCategory(value, buckets) {
+    if (!buckets) {
+        buckets = [-2, -2 / 3, 2 / 3, 2];
+    }
+    if (typeof buckets.length === "number" && buckets.length > 3) {
+        if (value < buckets[0]) return "very low";
+        if (value < buckets[1]) return "low";
+        if (value < buckets[2]) return "medium";
+        if (value < buckets[3]) return "high";
+        if (value >= buckets[3]) return "very high";
+    }
+    let keys = Object.keys(buckets).sort(function (a, b) {
+            return buckets[a] - buckets[b];
+        }),
+        l = keys.length;
+    for (let i = 0; i < l; i++) {
+        if (value < buckets[keys[i]]) {
+            return keys[i];
+        }
+    }
+    return keys[l - 1];
+}

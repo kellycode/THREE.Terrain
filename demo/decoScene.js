@@ -1,7 +1,11 @@
 function DecoScene() {}
 
-function scatterMeshes(settings) {
+function scatterMeshes(settings, terrainScene) {
     let segments = parseInt(settings.segments, 10);
+
+    if(typeof settings === 'undefined') {
+        console.log('ng')
+    }
     let spread;
     let randomness;
     let decoScene;
@@ -33,7 +37,7 @@ function scatterMeshes(settings) {
         })();
     } else {
         spread = THREE.Terrain.InEaseOut(settings.spread * 0.01) * (settings.scattering === "Worley" ? 1 : 0.5);
-        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], o, 2, 0.125);
+        randomness = THREE.Terrain.ScatterHelper(THREE.Terrain[settings.scattering], scatterOptions, 2, 0.125);
     }
     let geo = terrainScene.children[0].geometry;
 
