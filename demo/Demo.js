@@ -257,6 +257,7 @@ export class Demo {
         this.scene.add(this.fpsCamera);
         this.controls = new OrbitControls(this.fpsCamera, this.renderer.domElement);
         this.controls.enabled = false;
+        // fps control items
         //this.controls.movementSpeed = 100;
         //this.controls.lookSpeed = 0.075;
     }
