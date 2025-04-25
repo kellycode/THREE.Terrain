@@ -1,3 +1,5 @@
+April 24, 2025 Kellycode organized and upgraded THREE.Terrain to ES6 Modules and Three r175.  r152 significantly changed how light work so colors look a little dim atm.
+
 [![npm version](https://badge.fury.io/js/three.terrain.js.svg)](https://www.npmjs.com/package/three.terrain.js)
 
 `THREE.Terrain` is a **procedural terrain generation engine** for use with the
