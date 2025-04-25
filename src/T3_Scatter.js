@@ -47,6 +47,8 @@
  *   return value of a call to `THREE.Terrain()` or added to that return value;
  *   otherwise the position and rotation of the meshes will be wrong.
  */
+import * as THREE from "three";
+import { T3_Utility } from "./T3_Utility.js";
 
 export class T3_Scatter {
     constructor() {

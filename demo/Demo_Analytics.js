@@ -18,15 +18,27 @@ Number.prototype.round = function (v, a) {
     return Math.round(v * m) / m;
 };
 
+import { T3_Analyze } from "../src/T3_Analyze.js"; 
 
-function loadAnalyticsTemplate(templatePath, targetDivId, demo) {
+export class Demo_Analytics {
+    constructor() {
+        if (this instanceof Demo_Analytics) {
+            throw Error("A static class cannot be instantiated.");
+        }
+    }
+
+static elevationGraph;
+static slopeGraph;
+static analyticsValues;
+
+static loadAnalyticsTemplate(templatePath, targetDivId, demo) {
     fetch(templatePath)
         .then((response) => response.text())
         .then((template) => {
             const targetDiv = document.getElementById(targetDivId);
             if (targetDiv) {
                 targetDiv.innerHTML = template;
-                initAnalytics(demo);
+                this.initAnalytics(demo);
             } else {
                 console.error(`Div with id "${targetDivId}" not found.`);
             }
@@ -34,22 +46,22 @@ function loadAnalyticsTemplate(templatePath, targetDivId, demo) {
         .catch((error) => console.error("Error loading template:", error));
 }
 
-function populateAnalytics(demo) {
+static populateAnalytics(demo) {
     let analysis = T3_Analyze.Analyze(demo.terrainScene.children[0], demo.regenOpts);
-    let deviations = getSummary(analysis);
+    let deviations = this.getSummary(analysis);
     let prop;
 
-    analysis.elevation.drawHistogram(elevationGraph, 10);
+    analysis.elevation.drawHistogram(this.elevationGraph, 10);
 
-    analysis.slope.drawHistogram(slopeGraph, 10);
+    analysis.slope.drawHistogram(this.slopeGraph, 10);
 
-    for (let i = 0, l = analyticsValues.length; i < l; i++) {
-        prop = analyticsValues[i].getAttribute("data-property").split(".");
+    for (let i = 0, l = this.analyticsValues.length; i < l; i++) {
+        prop = this.analyticsValues[i].getAttribute("data-property").split(".");
         let analytic = analysis[prop[0]][prop[1]];
-        if (analyticsValues[i].getAttribute("class").split(/\s+/).indexOf("percent") !== -1) {
+        if (this.analyticsValues[i].getAttribute("class").split(/\s+/).indexOf("percent") !== -1) {
             analytic *= 100;
         }
-        analyticsValues[i].textContent = cleanAnalytic(analytic);
+        this.analyticsValues[i].textContent = this.cleanAnalytic(analytic);
     }
 
     for (prop in deviations) {
@@ -59,15 +71,15 @@ function populateAnalytics(demo) {
     }
 }
 
-function initAnalytics(demo) {
+static initAnalytics(demo) {
     document.getElementById("show-analytics").classList.remove("visible");
     let analytics = document.getElementById("analytics");
     analytics.scrollTop = 0;
     analytics.classList.add("visible");
 
-    elevationGraph = document.getElementById("elevation-graph");
-    slopeGraph = document.getElementById("slope-graph");
-    analyticsValues = document.getElementsByClassName("value");
+    this.elevationGraph = document.getElementById("elevation-graph");
+    this.slopeGraph = document.getElementById("slope-graph");
+    this.analyticsValues = document.getElementsByClassName("value");
 
     document.querySelector("#analytics .close").addEventListener(
         "click",
@@ -79,10 +91,10 @@ function initAnalytics(demo) {
         false
     );
 
-    populateAnalytics(demo);
+    this.populateAnalytics(demo);
 }
 
-function cleanAnalytic(val) {
+static cleanAnalytic(val) {
     if (Array.isArray(val)) {
         if (val.length === 1) {
             val = val[0];
@@ -108,7 +120,7 @@ function cleanAnalytic(val) {
     return c + (typeof val === "undefined" || val === null ? NaN : val).round(3);
 }
 
-let moments = {
+static moments = {
     "elevation.stdev": {
         mean: 42.063,
         stdev: 6.353,
@@ -147,19 +159,19 @@ let moments = {
     },
 };
 
-function getSummary(analytics) {
+static getSummary(analytics) {
     let results = {},
         deviationBuckets = [-2, -2 / 3, 2 / 3, 2];
-    for (let prop in moments) {
-        if (moments.hasOwnProperty(prop)) {
-            let averageProp = moments[prop],
+    for (let prop in this.moments) {
+        if (this.moments.hasOwnProperty(prop)) {
+            let averageProp = this.moments[prop],
                 split = prop.split("."),
                 sampleProp = analytics[split[0]][split[1]];
             if (typeof averageProp.mean === "number") {
                 results[prop] = (sampleProp - averageProp.mean) / averageProp.stdev;
-                results[prop] = numberToCategory(results[prop], deviationBuckets);
+                results[prop] = this.numberToCategory(results[prop], deviationBuckets);
             } else {
-                results[prop] = numberToCategory(sampleProp, averageProp.levels);
+                results[prop] = this.numberToCategory(sampleProp, averageProp.levels);
             }
         }
     }
@@ -185,7 +197,7 @@ function getSummary(analytics) {
  * @return {String}
  *   The category into which the numeric input was classified.
  */
-function numberToCategory(value, buckets) {
+static numberToCategory(value, buckets) {
     if (!buckets) {
         buckets = [-2, -2 / 3, 2 / 3, 2];
     }
@@ -206,4 +218,6 @@ function numberToCategory(value, buckets) {
         }
     }
     return keys[l - 1];
+}
+
 }

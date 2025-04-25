@@ -1,3 +1,5 @@
+import { T3_Utility } from "./T3_Utility.js";
+
 export class T3_Gaussian {
     constructor() {
         if (this instanceof T3_Gaussian) {

@@ -1,3 +1,6 @@
+import * as THREE from "three";
+import { T3_Utility } from "../src/T3_Utility.js";
+
 export class T3_Analyze {
     constructor() {
         if (this instanceof T3_Analyze) {

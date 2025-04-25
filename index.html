@@ -31,59 +31,13 @@
             W = Forward, S = Back, A = Left, D = Right, R = Up, F = Down, Q = Freeze, Mouse = Look
         </div>
 
-        <script src="demo/libs/stats.min.js"></script>
-        <script src="demo/libs/dat.gui.min.js"></script>
-        <!-- <script src="demo/libs/three.min.js"></script> -->
-        <!-- <script src="demo/libs/FirstPersonControls.js"></script> -->
-
-
         <!-- <script src="build/THREE.Terrain.min.js"></script> -->
 
         <!-- Demo -->
-        <script src="demo/analytics.js"></script>
-        <script src="demo/dat.js"></script>
-        <script src="demo/decoScene.js"></script>
+        <script src="demo/libs/dat.gui.min.js"></script>
         
-        <!-- <script src="demo/index.js"></script> -->
-
         <script type="module">
-            import * as THREE from "three";
-            window.THREE = THREE;
-            import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-            window.OrbitControls = OrbitControls;
-
             import { Demo } from "./demo/Demo.js";
-            import { T3_TerrainCore } from "./src/T3_TerrainCore.js"; 
-            window.T3_TerrainCore = T3_TerrainCore;
-            import { T3_Noise } from "./src/T3_Noise.js"; 
-            window.T3_Noise = T3_Noise;
-            import { T3_Images } from "./src/T3_Images.js"; 
-            window.T3_Images = T3_Images;
-            import { T3_Filters } from "./src/T3_Filters.js"; 
-            window.T3_Filters = T3_Filters;
-            import { T3_Utility } from "./src/T3_Utility.js"; 
-            window.T3_Utility = T3_Utility;
-            import { T3_Materials } from "./src/T3_Materials.js"; 
-            window.T3_Materials = T3_Materials;
-            import { T3_Worley } from "./src/T3_Worley.js"; 
-            window.T3_Worley = T3_Worley;
-            import { T3_Generators } from "./src/T3_Generators.js"; 
-            window.T3_Generators = T3_Generators;
-            import { T3_Scatter } from "./src/T3_Scatter.js"; 
-            window.T3_Scatter = T3_Scatter;
-            import { T3_Gaussian } from "./src/T3_Gaussian.js"; 
-            window.T3_Gaussian = T3_Gaussian;
-            import { T3_Influences } from "./src/T3_Influences.js"; 
-            window.T3_Influences = T3_Influences;
-            import { T3_Analyze } from "./src/T3_Analyze.js"; 
-            window.T3_Analyze = T3_Analyze;
-
-            // add later
-            //import Stats from "three/addons/libs/stats.module.js";
-            //stats = new Stats();
-            //container.appendChild(stats.dom);
-            //stats.update();
-
 
             let demo = new Demo();
 
@@ -98,7 +52,6 @@
             ];
 
             let callback = function(preloaded){
-                //console.log(preloaded)
                 demo.setup(preloaded)
             }
 

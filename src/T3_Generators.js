@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { T3_Noise } from "./T3_Noise.js";
+import { T3_Filters } from "./T3_Filters.js";
 
 export class T3_Generators {
     constructor() {

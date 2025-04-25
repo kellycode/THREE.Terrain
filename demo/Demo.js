@@ -1,3 +1,22 @@
+
+import * as THREE from "three";
+import Stats from "three/addons/libs/stats.module.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+import { T3_TerrainCore } from "../src/T3_TerrainCore.js";
+import { T3_Images } from "../src/T3_Images.js";
+import { T3_Utility } from "../src/T3_Utility.js";
+import { T3_Materials } from "../src/T3_Materials.js";
+import { T3_Generators } from "../src/T3_Generators.js";
+import { T3_Gaussian } from "../src/T3_Gaussian.js";
+import { T3_Influences } from "../src/T3_Influences.js";
+import { T3_Analyze } from "../src/T3_Analyze.js";
+
+import { Demo_Analytics } from "./Demo_Analytics.js"; 
+import { Demo_DatConfig } from "./Demo_DatConfig.js";
+import { Demo_DecoScene } from "./Demo_DecoScene.js";
+
+
 export class Demo {
     constructor() {
         this.camera;
@@ -88,7 +107,7 @@ export class Demo {
         document.querySelector("#show-analytics").addEventListener(
             "click",
             function (event) {
-                loadAnalyticsTemplate("./demo/analytics.html", "analytics", this);
+                Analytics.loadAnalyticsTemplate("./demo/analytics.html", "analytics", this);
                 // onload calls initAnalytics();
                 event.preventDefault();
             }.bind(this),
@@ -192,7 +211,7 @@ export class Demo {
         // uses world items
         this.settings = this.Settings();
         this.watchFocus();
-        setupDatGui(this.settings);
+        Demo_DatConfig.setupDatGui(this.settings);
         this.startAnimating();
         // uses settings
         this.Regenerate();
@@ -322,7 +341,7 @@ export class Demo {
 
         this.lastOptions = regenOpts;
 
-        scatterMeshes(this.settings, this.terrainScene);
+        Demo_DecoScene.scatterMeshes(this.settings, this.terrainScene);
     }
 
     edgeCorrection = function (that, vertices, options) {
@@ -406,7 +425,7 @@ export class Demo {
         }.bind(this);
 
         this["Scatter meshes"] = function () {
-            scatterMeshes(this.settings, this.terrainScene);
+            Demo_DecoScene.scatterMeshes(this.settings, this.terrainScene);
         };
 
         return this;
