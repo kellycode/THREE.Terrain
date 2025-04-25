@@ -68,7 +68,7 @@ export class Demo {
             edgeDistance: 256,
             edgeCurve: "EaseInOut",
             "width:length ratio": 1.0,
-            "Flight mode": this.useFPS,
+            "Orbit mode": this.useFPS,
             "Light color": "#" + this.skyLightColor.getHexString(),
             spread: 60,
             scattering: "PerlinAltitude",
@@ -178,13 +178,14 @@ export class Demo {
         let loadedTextures = {};
         let hasError = false;
 
-        function checkAllLoaded() {
+        function checkAllLoaded(texture) {
+            // per Three r152
+            texture.colorSpace = THREE.SRGBColorSpace;
             loadedCount++;
             if (loadedCount === textureUrlArray.length && !hasError) {
                 callback(loadedTextures);
             }
         }
-
         try {
             textureUrlArray.forEach((url) => {
                 loadedTextures[url] = textureLoader.load(
@@ -222,6 +223,9 @@ export class Demo {
         this.scene.fog = new THREE.FogExp2(0x868293, 0.0007);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        //THREE.ColorManagement.enabled = false;
+        // per Three r152
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
         this.renderer.domElement.setAttribute("tabindex", -1);
@@ -253,8 +257,8 @@ export class Demo {
         this.scene.add(this.fpsCamera);
         this.controls = new OrbitControls(this.fpsCamera, this.renderer.domElement);
         this.controls.enabled = false;
-        this.controls.movementSpeed = 100;
-        this.controls.lookSpeed = 0.075;
+        //this.controls.movementSpeed = 100;
+        //this.controls.lookSpeed = 0.075;
     }
 
     setupWorld() {
@@ -281,13 +285,15 @@ export class Demo {
         //const ambient = new THREE.AmbientLight(0x404040); // soft white light
         //this.scene.add(ambient);
 
+        let intensity = 1.5;
+
         // directional light
-        this.skyLight = new THREE.DirectionalLight(this.skyLightColor, 1.5);
+        this.skyLight = new THREE.DirectionalLight(this.skyLightColor, intensity);
         this.skyLight.position.set(2950, 2625, -160); // Sun on the sky texture
         this.scene.add(this.skyLight);
 
         // directional light
-        let light = new THREE.DirectionalLight(0xc3eaff, 1.5);
+        let light = new THREE.DirectionalLight(0xc3eaff, intensity);
         light.position.set(-1, -0.5, -1);
         this.scene.add(light);
     }

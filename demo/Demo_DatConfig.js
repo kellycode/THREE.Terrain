@@ -104,15 +104,16 @@ export class Demo_DatConfig {
             .onFinishChange(settings.callRegenerate);
         edgesFolder.add(settings, "edgeDistance", 0, 512).step(32).onFinishChange(settings.callRegenerate);
     
-        gui.add(settings, "Flight mode").onChange(function (val) {
+        gui.add(settings, "Orbit mode").onChange(function (val) {
             settings.useFPS = val;
             settings.fpsCamera.position.x = 449;
             settings.fpsCamera.position.y = 311;
             settings.fpsCamera.position.z = 376;
             settings.controls.update(0);
-            settings.controls.enabled = false;
+            settings.controls.enabled = val;
             if (settings.useFPS) {
-                document.getElementById("fpscontrols").className = "visible";
+                // fps controls item
+                //document.getElementById("fpscontrols").className = "visible";
                 setTimeout(function () {
                     settings.controls.enabled = true;
                 }, 1000);
