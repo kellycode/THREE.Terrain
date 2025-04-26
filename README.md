@@ -1,4 +1,4 @@
-April 24, 2025 Kellycode organized and upgraded THREE.Terrain to ES6 Modules and Three r175.  r152 significantly changed texture handling so colors look a little dim atm.
+April 24, 2025 Kellycode organized and upgraded THREE.Terrain to ES6 Modules and Three r175.  Grunt build next
 
 [![npm version](https://badge.fury.io/js/three.terrain.js.svg)](https://www.npmjs.com/package/three.terrain.js)
 
