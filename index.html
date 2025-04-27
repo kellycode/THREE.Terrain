@@ -3,13 +3,9 @@
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-
         <title>Terrain</title>
-
         <meta name="description" content="A demo of the THREE.Terrain library." />
-
         <link rel="icon" href="demo/img/favicon.png" />
-
         <link rel="stylesheet" href="demo/index.css" />
         <script type="importmap">
             {
@@ -31,13 +27,13 @@
             W = Forward, S = Back, A = Left, D = Right, R = Up, F = Down, Q = Freeze, Mouse = Look
         </div>
 
-        <!-- <script src="build/THREE.Terrain.min.js"></script> -->
-
         <!-- Demo -->
         <script src="demo/libs/dat.gui.min.js"></script>
         
         <script type="module">
-            import { Demo } from "./demo/Demo.js";
+            import { Demo } from "./build/T3_Bundle.js";
+            // or
+            //import { Demo } from "./demo/Demo.js";
 
             let demo = new Demo();
 

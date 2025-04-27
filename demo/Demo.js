@@ -10,8 +10,8 @@ import { T3_Materials } from "../src/T3_Materials.js";
 import { T3_Generators } from "../src/T3_Generators.js";
 import { T3_Gaussian } from "../src/T3_Gaussian.js";
 import { T3_Influences } from "../src/T3_Influences.js";
-import { T3_Analyze } from "../src/T3_Analyze.js";
 
+import { Demo_Analyze } from "./Demo_Analyze.js";
 import { Demo_Analytics } from "./Demo_Analytics.js"; 
 import { Demo_DatConfig } from "./Demo_DatConfig.js";
 import { Demo_DecoScene } from "./Demo_DecoScene.js";
@@ -107,7 +107,7 @@ export class Demo {
         document.querySelector("#show-analytics").addEventListener(
             "click",
             function (event) {
-                Analytics.loadAnalyticsTemplate("./demo/analytics.html", "analytics", this);
+                Demo_Analytics.loadAnalyticsTemplate("./demo/analytics.html", "analytics", this);
                 // onload calls initAnalytics();
                 event.preventDefault();
             }.bind(this),
@@ -257,7 +257,7 @@ export class Demo {
         this.scene.add(this.fpsCamera);
         this.controls = new OrbitControls(this.fpsCamera, this.renderer.domElement);
         this.controls.enabled = false;
-        // fps control items
+        // FirstPersonControls items
         //this.controls.movementSpeed = 100;
         //this.controls.lookSpeed = 0.075;
     }

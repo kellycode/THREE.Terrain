@@ -26,12 +26,9 @@
     "license": "MIT",
     "readmeFilename": "README.md",
     "devDependencies": {
-        "grunt": "^1.4.1",
-        "grunt-contrib-concat": "^1.0.1",
-        "grunt-contrib-jshint": "^2.1.0",
-        "grunt-contrib-uglify": "^5.0.1",
-        "grunt-contrib-watch": "^1.1.0",
-        "grunt-jscs": "^3.0.1",
-        "three": "^0.130.1"
+        "grunt": "^1.6.1",
+        "grunt-contrib-concat": "^2.1.0",
+        "grunt-contrib-uglify": "^5.2.2",
+        "grunt-text-replace":  "^0.4.0"
     }
 }

@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { T3_Utility } from "../src/T3_Utility.js";
 
-export class T3_Analyze {
+export class Demo_Analyze {
     constructor() {
-        if (this instanceof T3_Analyze) {
+        if (this instanceof Demo_Analyze) {
             throw Error("A static class cannot be instantiated.");
         }
     }

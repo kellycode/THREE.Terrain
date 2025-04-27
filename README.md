@@ -1,4 +1,10 @@
-April 24, 2025 Kellycode organized and upgraded THREE.Terrain to ES6 Modules and Three r175.  Grunt build next
+April 27, 2025 Kellycode  
+1. organized and upgraded THREE.Terrain to ES6 Modules and Three r175.  
+2. removed any object attachments to THREE. directly  
+3. removed unsupported grunt packages  
+4. organized the demo to modules and logical classes
+5. removed grunt-contrib-watch as unnecessary
+6. removed grunt-contrib-jshint as unsupported
 
 [![npm version](https://badge.fury.io/js/three.terrain.js.svg)](https://www.npmjs.com/package/three.terrain.js)
 

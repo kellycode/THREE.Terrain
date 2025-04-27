@@ -1,121 +1,86 @@
-module.exports = function(grunt) {
-  var banner = '/**\n' +
-               ' * THREE.Terrain.js <%= pkg.version %>-<%= grunt.template.today("yyyymmdd") %>\n' +
-               ' *\n' +
-               ' * @author <%= pkg.author %>\n' +
-               ' * @license <%= pkg.license %>\n' +
-               ' */\n';
-  grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
-    concat: {
-      options: {
-        banner: banner + '\n',
-        separator: grunt.util.linefeed,
-      },
-      target: {
-        src: [
-          'src/noise.js',
-          'src/core.js',
-          'src/images.js',
-          'src/filters.js',
-          'src/generators.js',
-          'src/materials.js',
-          'src/scatter.js',
-          'src/influences.js',
-        ],
-        dest: 'build/THREE.Terrain.js',
-        nonull: true,
-      },
-    },
-    uglify: {
-      options: {
-        banner: banner,
-        compress: {
-          dead_code: false,
-          side_effects: false,
-          unused: false,
+module.exports = function (grunt) {
+    var banner =
+        "/**\n" +
+        ' * THREE.Terrain.js <%= pkg.version %>-<%= grunt.template.today("yyyymmdd") %>\n' +
+        " *\n" +
+        " * @author <%= pkg.author %>\n" +
+        " * @license <%= pkg.license %>\n" +
+        " */\n\n" +
+        "//external_imports;\n\n";
+    grunt.initConfig({
+        pkg: grunt.file.readJSON("package.json"),
+        concat: {
+            options: {
+                banner: banner + "\n",
+                separator: grunt.util.linefeed,
+            },
+            target: {
+                src: [
+                    "demo/Demo_Analytics.js",
+                    "demo/Demo_Analyze.js",
+                    "demo/Demo_DatConfig.js",
+                    "demo/Demo_DecoScene.js",
+                    "demo/Demo.js",
+                    "src/T3_Brownian.js",
+                    "src/T3_Filters.js",
+                    "src/T3_Gaussian.js",
+                    "src/T3_Generators.js",
+                    "src/T3_Images.js",
+                    "src/T3_Influences.js",
+                    "src/T3_Materials.js",
+                    "src/T3_Noise.js",
+                    "src/T3_Preloader.js",
+                    "src/T3_Scatter.js",
+                    "src/T3_TerrainCore.js",
+                    "src/T3_Utility.js",
+                    "src/T3_Worley.js",
+                ],
+                dest: "build/T3_Bundle.js",
+                nonull: true,
+            },
         },
-        mangle: true,
-        preserveComments: function(node, comment) {
-          return (/^!/).test(comment.value);
+        replace: {
+            replace_imports: {
+                src: ["./build/T3_Bundle.js"], // source files array (supports minimatch)
+                dest: "./build/T3_Bundle.js", // destination directory or file
+                replacements: [
+                    {
+                        from: /import\s+.*?;/g, // remove all import statements
+                        to: "",
+                    },
+                    {
+                      from: "//external_imports;", // add the external imports we need
+                      to: 'import * as THREE from "three";\n' +
+                      'import Stats from "three/addons/libs/stats.module.js";\n' +
+                      'import { OrbitControls } from "three/addons/controls/OrbitControls.js";\n\n',
+                  }
+                ],
+            },
         },
-        report: 'min',
-        sourceMap: true,
-      },
-      target: {
-        files: {
-          'build/THREE.Terrain.min.js': ['build/THREE.Terrain.js'],
+        uglify: {
+            options: {
+                compress: {
+                    dead_code: false,
+                    side_effects: false,
+                    unused: false,
+                },
+                mangle: true,
+                report: "min",
+                sourceMap: true,
+                output: {
+                    comments: true,
+                },
+            },
+            target: {
+                files: {
+                    "./build/T3_Bundle.min.js": ["./build/T3_Bundle.js"],
+                },
+            },
         },
-      },
-    },
-    jshint: {
-      options: {
-        trailing: true,
-      },
-      target: {
-        src: [
-          'demo/index.js',
-          'src/noise.js',
-          'src/core.js',
-          'src/images.js',
-          'src/filters.js',
-          'src/gaussian.js',
-          'src/weightedBoxBlurGaussian.js',
-          'src/generators.js',
-          'src/materials.js',
-          'src/scatter.js',
-          'src/influences.js',
-          'src/worley.js',
-          'src/brownian.js',
-          'src/analysis.js',
-          'Gruntfile.js',
-        ],
-      },
-    },
-    jscs: {
-      options: {
-        config: '.jscs.json',
-      },
-      main: [
-        'demo/index.js',
-        'src/noise.js',
-        'src/core.js',
-        'src/images.js',
-        'src/filters.js',
-        'src/gaussian.js',
-        'src/weightedBoxBlurGaussian.js',
-        'src/generators.js',
-        'src/materials.js',
-        'src/scatter.js',
-        'src/influences.js',
-        'src/worley.js',
-        'src/brownian.js',
-        'src/analysis.js',
-        'Gruntfile.js',
-      ],
-    },
-    watch: {
-      files: [
-        'src/noise.js',
-        'src/core.js',
-        'src/images.js',
-        'src/filters.js',
-        'src/gaussian.js',
-        'src/weightedBoxBlurGaussian.js',
-        'src/generators.js',
-        'src/materials.js',
-        'src/scatter.js',
-        'src/influences.js',
-      ],
-      tasks: ['concat', 'uglify'],
-    },
-  });
+    });
 
-  grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-jscs');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.registerTask('default', ['concat', 'uglify', 'jshint', 'jscs']);
-  grunt.registerTask('lint', ['jshint', 'jscs']);
+    grunt.loadNpmTasks("grunt-contrib-concat");
+    grunt.loadNpmTasks("grunt-contrib-uglify");
+    grunt.loadNpmTasks("grunt-text-replace");
+    grunt.registerTask("default", ["concat", "replace", "uglify"]);
 };

@@ -18,7 +18,7 @@ Number.prototype.round = function (v, a) {
     return Math.round(v * m) / m;
 };
 
-import { T3_Analyze } from "../src/T3_Analyze.js"; 
+import { Demo_Analyze } from "./Demo_Analyze.js"; 
 
 export class Demo_Analytics {
     constructor() {
@@ -47,7 +47,7 @@ static loadAnalyticsTemplate(templatePath, targetDivId, demo) {
 }
 
 static populateAnalytics(demo) {
-    let analysis = T3_Analyze.Analyze(demo.terrainScene.children[0], demo.regenOpts);
+    let analysis = Demo_Analyze.Analyze(demo.terrainScene.children[0], demo.regenOpts);
     let deviations = this.getSummary(analysis);
     let prop;
 
