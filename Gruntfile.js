@@ -10,6 +10,7 @@ module.exports = function (grunt) {
         "//external_imports;\n\n";
     grunt.initConfig({
         pkg: grunt.file.readJSON("package.json"),
+        // start with command "grunt watch"
         watch: {
             files: [
                 "src/T3_Brownian.js",
