@@ -6,9 +6,28 @@ module.exports = function (grunt) {
         " * @author <%= pkg.author %>\n" +
         " * @license <%= pkg.license %>\n" +
         " */\n\n" +
+        // a location for external imports to be added
         "//external_imports;\n\n";
     grunt.initConfig({
         pkg: grunt.file.readJSON("package.json"),
+        watch: {
+            files: [
+                "src/T3_Brownian.js",
+                "src/T3_Filters.js",
+                "src/T3_Gaussian.js",
+                "src/T3_Generators.js",
+                "src/T3_Images.js",
+                "src/T3_Influences.js",
+                "src/T3_Materials.js",
+                "src/T3_Noise.js",
+                "src/T3_Preloader.js",
+                "src/T3_Scatter.js",
+                "src/T3_TerrainCore.js",
+                "src/T3_Utility.js",
+                "src/T3_Worley.js",
+            ],
+            tasks: ["concat", "replace", "uglify"]
+          },
         concat: {
             options: {
                 banner: banner + "\n",
@@ -16,11 +35,6 @@ module.exports = function (grunt) {
             },
             target: {
                 src: [
-                    "demo/Demo_Analytics.js",
-                    "demo/Demo_Analyze.js",
-                    "demo/Demo_DatConfig.js",
-                    "demo/Demo_DecoScene.js",
-                    "demo/Demo.js",
                     "src/T3_Brownian.js",
                     "src/T3_Filters.js",
                     "src/T3_Gaussian.js",
@@ -49,11 +63,12 @@ module.exports = function (grunt) {
                         to: "",
                     },
                     {
-                      from: "//external_imports;", // add the external imports we need
-                      to: 'import * as THREE from "three";\n' +
-                      'import Stats from "three/addons/libs/stats.module.js";\n' +
-                      'import { OrbitControls } from "three/addons/controls/OrbitControls.js";\n\n',
-                  }
+                        from: "//external_imports;", // add the external imports we need
+                        to:
+                            'import * as THREE from "three";\n' +
+                            'import Stats from "three/addons/libs/stats.module.js";\n' +
+                            'import { OrbitControls } from "three/addons/controls/OrbitControls.js";\n\n',
+                    },
                 ],
             },
         },
@@ -82,5 +97,8 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks("grunt-text-replace");
+    grunt.loadNpmTasks('grunt-contrib-watch');
+
     grunt.registerTask("default", ["concat", "replace", "uglify"]);
+
 };

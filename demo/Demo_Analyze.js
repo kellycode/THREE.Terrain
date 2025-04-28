@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { T3_Utility } from "../src/T3_Utility.js";
+import { T3_Utility } from "../build/T3_Bundle.js";
 
 export class Demo_Analyze {
     constructor() {

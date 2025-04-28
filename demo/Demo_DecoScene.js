@@ -1,10 +1,10 @@
 // The Tree Factory
 import * as THREE from "three";
 
-import { T3_Utility } from "../src/T3_Utility.js";
-import { T3_Worley } from "../src/T3_Worley.js"; 
-import { T3_Generators } from "../src/T3_Generators.js";
-import { T3_Scatter } from "../src/T3_Scatter.js";
+import { T3_Utility } from "../build/T3_Bundle.js";
+import { T3_Worley } from "../build/T3_Bundle.js"; 
+import { T3_Generators } from "../build/T3_Bundle.js";
+import { T3_Scatter } from "../build/T3_Bundle.js";
 
 export class Demo_DecoScene {
     constructor() {

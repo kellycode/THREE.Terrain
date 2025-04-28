@@ -1,3 +1,5 @@
+import { Demo_Analyze } from "./Demo_Analyze.js"; 
+
 /**
  * Utility method to round numbers to a given number of decimal places.
  *
@@ -17,8 +19,6 @@ Number.prototype.round = function (v, a) {
     var m = Math.pow(10, a | 0);
     return Math.round(v * m) / m;
 };
-
-import { Demo_Analyze } from "./Demo_Analyze.js"; 
 
 export class Demo_Analytics {
     constructor() {

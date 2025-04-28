@@ -3,13 +3,13 @@ import * as THREE from "three";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-import { T3_TerrainCore } from "../src/T3_TerrainCore.js";
-import { T3_Images } from "../src/T3_Images.js";
-import { T3_Utility } from "../src/T3_Utility.js";
-import { T3_Materials } from "../src/T3_Materials.js";
-import { T3_Generators } from "../src/T3_Generators.js";
-import { T3_Gaussian } from "../src/T3_Gaussian.js";
-import { T3_Influences } from "../src/T3_Influences.js";
+import { T3_TerrainCore } from "../build/T3_Bundle.js";
+import { T3_Images } from "../build/T3_Bundle.js";
+import { T3_Utility } from "../build/T3_Bundle.js";
+import { T3_Materials } from "../build/T3_Bundle.js";
+import { T3_Generators } from "../build/T3_Bundle.js";
+import { T3_Gaussian } from "../build/T3_Bundle.js";
+import { T3_Influences } from "../build/T3_Bundle.js";
 
 import { Demo_Analyze } from "./Demo_Analyze.js";
 import { Demo_Analytics } from "./Demo_Analytics.js"; 
